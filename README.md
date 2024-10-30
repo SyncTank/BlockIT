@@ -1,5 +1,14 @@
 # C++ Project BlockIT
 
+## Getting Started
+The example executables are included in the Binaries folder. Otherwise, check the release for the latest version of the application.
+
+### UseCase
+
+In-Progress
+
+## Building
+
 This is a project for C++ projects which utilize a Core/App project architecture. There are two included projects - one called _Core_, and one called _App_. [Premake](https://github.com/premake/premake-core) is used to generate project files.
 
 Core builds into a static library and contains common code for multiple applications. The app builds into an executable and links the Core static library, as well as provides an include path to Core's code.
