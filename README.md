@@ -1,11 +1,19 @@
 # C++ Project BlockIT
 
-## Getting Started
+### Getting Started
 The example executables are included in the Binaries folder. Otherwise, check the release for the latest version of the application.
+
+
+### Dependencies
+
+Make sure to have opengl and glfw installed on the machine to compile.
+I recommend using vcpkg for this as it automatically sets itself up with studio with no additional configuration needed.
+
+The libraries use in the project are ImGUI, Opengl3, glfw, windows.
 
 ### UseCase
 
-In-Progress
+BlockIT is an application where you can blacklist certain processes your computer is running, with a user set timeframe where it kills any processes in the list.
 
 ## Building
 
