@@ -35,6 +35,51 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+#pragma region Helpers
+
+static void HelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+// Data to be shared accross different functions of the demo.
+struct ImGuiWindowData
+{
+    // Examples Apps (accessible from the "Examples" menu)
+    bool ShowMainMenuBar = false;
+    bool ShowAppAssetsBrowser = false;
+    bool ShowAppConsole = false;
+    bool ShowAppCustomRendering = false;
+    bool ShowAppDocuments = false;
+    bool ShowAppDockSpace = false;
+    bool ShowAppLog = false;
+    bool ShowAppLayout = false;
+    bool ShowAppPropertyEditor = false;
+    bool ShowAppSimpleOverlay = false;
+    bool ShowAppAutoResize = false;
+    bool ShowAppConstrainedResize = false;
+    bool ShowAppFullscreen = false;
+    bool ShowAppLongText = false;
+    bool ShowAppWindowTitles = false;
+
+    // Dear ImGui Tools (accessible from the "Tools" menu)
+    bool ShowMetrics = false;
+    bool ShowDebugLog = false;
+    bool ShowIDStackTool = false;
+    bool ShowStyleEditor = false;
+    bool ShowAbout = false;
+
+};
+
+#pragma endregion
+
 // Main code
 #ifdef _WIN32
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -126,10 +171,27 @@ int main(int argc, char** argv)
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
 
-    // Our state
+    // Our state data
     bool show_demo_window = true;
-    bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    static bool no_menu = false;
+    static bool no_collapse = true;
+    static bool unsaved_document = false;
+    //static bool no_close = false;
+
+    ImGuiWindowFlags window_flags = 0;
+    if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
+    if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
+    if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
+    //if (no_close)           p_open = NULL; // Don't pass our bool* to Begin
+
+    static ImGuiWindowData gui_data;
+    if (gui_data.ShowMainMenuBar) {}
+    if (gui_data.ShowAppAutoResize) {}
+    if (gui_data.ShowAppLongText) {}
+    if (gui_data.ShowAbout) {}
+
 
     // Main loop
 #ifdef __EMSCRIPTEN__
@@ -160,46 +222,37 @@ int main(int argc, char** argv)
 
         #pragma region UI Components
 
+        //ex in demo
+        
+        // Options - Tools
+        //Style Editor 
+        //FrameRounding 
+
+        //menu save
+
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
         {
+            ImGui::Begin("Hello, ImGui!", 0, window_flags);
+            
+            ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             static float f = 0.0f;
             static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
             if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
                 counter++;
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
+            ImGui::Spacing();
+            ImGui::SeparatorText("ABOUT THIS DEMO:");
 
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
+            ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
 
-        ImGui::Begin("Hello, ImGui!");
-        ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
-        ImGui::End();
+            ImGui::End();
+        };
 
         #pragma endregion
 
