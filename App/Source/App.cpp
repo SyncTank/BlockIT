@@ -36,7 +36,12 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 // Main code
-int main(int, char**)
+#ifdef _WIN32
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+#else
+int main(int argc, char** argv)
+#endif
+
 {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
@@ -61,9 +66,6 @@ int main(int, char**)
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Make windows context invisable #W
-    //glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    //glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
@@ -73,6 +75,8 @@ int main(int, char**)
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
+    // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
+    //glfwHideWindow(window); 
     glfwSwapInterval(1); // Enable vsync
 
     // Setup Dear ImGui context
