@@ -78,6 +78,41 @@ struct ImGuiWindowData
 
 };
 
+static void ShowAppMainMenuBar()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            //ShowExampleMenuFile();
+            //ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+            ImGui::Separator();
+            if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+            if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+            if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+}
+
+void static ShowAboutWindow()
+{
+    if (!ImGui::Begin("About", 0, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::End();
+        return;
+    }
+    ImGui::Text("By Omar Cornut and all Dear ImGui contributors.");
+
+    ImGui::End();
+}
+
 #pragma endregion
 
 // Main code
@@ -187,10 +222,10 @@ int main(int argc, char** argv)
     //if (no_close)           p_open = NULL; // Don't pass our bool* to Begin
 
     static ImGuiWindowData gui_data;
-    if (gui_data.ShowMainMenuBar) {}
+    if (gui_data.ShowMainMenuBar) { ShowAppMainMenuBar(); }
     if (gui_data.ShowAppAutoResize) {}
     if (gui_data.ShowAppLongText) {}
-    if (gui_data.ShowAbout) {}
+    if (gui_data.ShowAbout) { ShowAboutWindow(); }
 
 
     // Main loop
@@ -229,6 +264,7 @@ int main(int argc, char** argv)
         //FrameRounding 
 
         //menu save
+        
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
@@ -236,12 +272,13 @@ int main(int argc, char** argv)
 
         {
             ImGui::Begin("Hello, ImGui!", 0, window_flags);
+            //ImGui::SetWindowSize(ImVec2(800,600), 0); // temp - cache this outside
             
             ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             static float f = 0.0f;
             static int counter = 0;
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+            if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
                 counter++;
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
