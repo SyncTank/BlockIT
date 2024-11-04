@@ -131,6 +131,78 @@ void static ShowAboutWindow()
     ImGui::End();
 }
 
+static void PushStyleCompact()
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImGui::PushStyleVarY(ImGuiStyleVar_FramePadding, (float)(int)(style.FramePadding.y * 0.60f));
+    ImGui::PushStyleVarY(ImGuiStyleVar_ItemSpacing, (float)(int)(style.ItemSpacing.y * 0.60f));
+}
+
+static void PopStyleCompact()
+{
+    ImGui::PopStyleVar(2);
+}
+
+void convertWStringToCString(const std::wstring& wstr, char* cstr, size_t cstrSize) {
+    size_t convertedChars = 0;
+    errno_t err = wcstombs_s(&convertedChars, cstr, cstrSize, wstr.c_str(), _TRUNCATE);
+    if (err != 0) {
+        std::cerr << "Conversion error occurred." << std::endl;
+    }
+}
+
+void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList)
+{
+    //App::getListIteams();
+    ImGuiListClipper clipper;
+    clipper.Begin(totalProcessList.size());
+
+    static ImGuiTabBarFlags flags = 
+        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
+
+    HelpMarker("This is a List of Active Processes in your System");
+    if (ImGui::BeginTable("table1", 2, flags, ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 260)))
+    {
+        ImGui::TableSetupColumn("Names");
+        ImGui::TableSetupColumn("Process");
+        ImGui::TableHeadersRow();
+
+        for (const auto& [key, value] : totalProcessList)
+        {
+            const size_t bufferSize = 50;
+            char cstr[bufferSize];
+            convertWStringToCString(key, cstr, bufferSize);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text(cstr);
+
+            ImGui::TableNextColumn();
+            ImGui::Text("32");
+        }
+        ImGui::EndTable();
+    }
+
+
+    if (ImGui::BeginTable("SelectableTable", 3)) {
+        for (int row = 0; row < 5; ++row) {
+            ImGui::TableNextRow();
+            for (int column = 0; column < 3; ++column) {
+                ImGui::TableSetColumnIndex(column);
+                char buf[32];
+                snprintf(buf, sizeof(buf), "Row %d Column %d", row, column);
+                if (ImGui::Selectable(buf, false, ImGuiSelectableFlags_SpanAllColumns)) {
+                    // Handle selection
+                    std::cout << "Row " << row << " selected" << std::endl;
+                }
+            }
+        }
+        ImGui::EndTable();
+    }
+
+
+}
+
 #pragma endregion
 
 // Main code
@@ -227,7 +299,10 @@ int main(int argc, char** argv)
     // Our state data
     bool show_demo_window = true;
     bool show_window = true;
+    bool no_scroll = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
+    Core::ProcessList(totalProcessList);
 
     static bool no_menu = true;
     static bool no_collapse = true;
@@ -238,7 +313,8 @@ int main(int argc, char** argv)
     if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
     if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
     if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
-    if (no_close)   show_window = NULL;
+    if (no_scroll)          window_flags |= ImGuiWindowFlags_NoScrollbar;
+    if (no_close)           show_window = NULL;
 
     static ImGuiWindowData gui_data;
     //if (gui_data.ShowMainMenuBar) { ShowAppMainMenuBar(); }
@@ -290,26 +366,37 @@ int main(int argc, char** argv)
             ImGui::Begin("Hello, ImGui!", 0, window_flags);
             //ImGui::SetWindowSize(ImVec2(800,600), 0); // temp - cache this outside
             
-            ImGui::SeparatorText("Timer");
+            ImGui::SeparatorText("Testing");
 
 
             ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
             static float f = 0.0f;
+
             static int counter = 0;
+
             if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
                 counter++;
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
 
             ImGui::Spacing();
-            ImGui::SeparatorText("ABOUT THIS DEMO:");
+            ImGui::SeparatorText("Timer");
             ImGui::Spacing();
 
             ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
 
 
             ImGui::SeparatorText("Processes");
+
+            setTable(totalProcessList);
+
+            ImGui::Spacing();
+            static std::string text_state;
+            App::setText(0,text_state);
+            ImGui::Text(text_state.c_str());
+            ImGui::Spacing();
 
             ImGui::End();
         };

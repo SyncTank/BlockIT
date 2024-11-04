@@ -5,6 +5,8 @@
 namespace App
 {
 
-	void Test();
+	void getListIteams();
+
+	void setText(int switchbase = NULL, std::string str = "");
 
 }
