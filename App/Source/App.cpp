@@ -160,7 +160,14 @@ void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcess
     static ImGuiTabBarFlags flags = 
         ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
 
-    HelpMarker("This is a List of Active Processes in your System");
+    HelpMarker("This is a List of Processes which you can designate which to kill");
+
+    ImGui::Spacing();
+    ImGui::Text("Active Processes");
+    ImGui::SameLine();
+    ImGui::Text("Murder List");
+    ImGui::Spacing();
+
     if (ImGui::BeginTable("table1", 2, flags, ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 260)))
     {
         ImGui::TableSetupColumn("Names");
@@ -366,14 +373,9 @@ int main(int argc, char** argv)
             ImGui::Begin("Hello, ImGui!", 0, window_flags);
             //ImGui::SetWindowSize(ImVec2(800,600), 0); // temp - cache this outside
             
-            ImGui::SeparatorText("Testing");
-
-
-            ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
             static float f = 0.0f;
-
             static int counter = 0;
 
             if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
@@ -385,18 +387,16 @@ int main(int argc, char** argv)
             ImGui::SeparatorText("Timer");
             ImGui::Spacing();
 
-            ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
+            HelpMarker("This Countdown Timer Set in Minutes.");
+            ImGui::Text("I am a placeholder Text that will get replaced by timer");
 
+            ImGui::Button("Set");
+            ImGui::SameLine();
+            ImGui::Button("Clear");
 
             ImGui::SeparatorText("Processes");
 
             setTable(totalProcessList);
-
-            ImGui::Spacing();
-            static std::string text_state;
-            App::setText(0,text_state);
-            ImGui::Text(text_state.c_str());
-            ImGui::Spacing();
 
             ImGui::End();
         };
