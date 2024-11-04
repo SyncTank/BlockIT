@@ -221,7 +221,7 @@ static void ShowExampleAppLongText(bool* p_open);
 static void ShowExampleAppWindowTitles(bool* p_open);
 static void ShowExampleMenuFile();
 
-// We split the contents of the big ShowDemoWindow() function into smaller functions
+// We split the contents ShowDemoWindowMenuBarof the big ShowDemoWindow() function into smaller functions
 // (because the link time of very large functions tends to grow non-linearly)
 static void ShowDemoWindowMenuBar(ImGuiDemoWindowData* demo_data);
 static void ShowDemoWindowWidgets(ImGuiDemoWindowData* demo_data);

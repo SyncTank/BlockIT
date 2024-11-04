@@ -78,26 +78,44 @@ struct ImGuiWindowData
 
 };
 
-static void ShowAppMainMenuBar()
+// Helper to wire demo markers located in code to an interactive browser
+typedef void (*ImGuiMarkerCallback)(const char* file, int line, const char* section, void* user_data);
+extern ImGuiMarkerCallback      GImGuiMarkerCallback;
+extern void* GImGuiMarkerCallbackUserData;
+ImGuiMarkerCallback             GImGuiMarkerCallback = NULL;
+void* GImGuiMarkerCallbackUserData = NULL;
+#define IMGUI_MARKER(section)  do { if (GImGuiMarkerCallback != NULL) GImGuiMarkerCallback(__FILE__, __LINE__, section, GImGuiMarkerCallbackUserData); } while (0)
+
+static void ShowWindowMenuBar(ImGuiWindowData* demo_data)
 {
-    if (ImGui::BeginMainMenuBar())
+    IMGUI_MARKER("Menu");
+    if (ImGui::BeginMenuBar())
     {
-        if (ImGui::BeginMenu("File"))
+        IMGUI_MARKER("Menu/File");
+        if (ImGui::BeginMenu("Menu"))
         {
+            //IMGUI_DEMO_MARKER("Menu/File");
             //ShowExampleMenuFile();
-            //ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Edit"))
-        {
-            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-            ImGui::Separator();
-            if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-            if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-            if (ImGui::MenuItem("Paste", "CTRL+V")) {}
             ImGui::EndMenu();
         }
-        ImGui::EndMainMenuBar();
+        if (ImGui::BeginMenu("Examples"))
+        {
+            IMGUI_MARKER("Menu/Examples");
+            ImGui::Text("Yes");
+            ImGui::MenuItem("N");
+
+            ImGui::EndMenu();
+        }
+        //if (ImGui::MenuItem("MenuItem")) {} // You can also use MenuItem() inside a menu bar!
+        if (ImGui::BeginMenu("Tools"))
+        {
+            IMGUI_MARKER("Menu/Tools");
+            ImGui::Text("Yes");
+            ImGui::MenuItem("N");
+
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
     }
 }
 
@@ -108,7 +126,7 @@ void static ShowAboutWindow()
         ImGui::End();
         return;
     }
-    ImGui::Text("By Omar Cornut and all Dear ImGui contributors.");
+    ImGui::Text("By Rudy.");
 
     ImGui::End();
 }
@@ -208,24 +226,26 @@ int main(int argc, char** argv)
 
     // Our state data
     bool show_demo_window = true;
+    bool show_window = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    static bool no_menu = false;
+    static bool no_menu = true;
     static bool no_collapse = true;
     static bool unsaved_document = false;
-    //static bool no_close = false;
+    static bool no_close = false;
 
     ImGuiWindowFlags window_flags = 0;
     if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
     if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
     if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
-    //if (no_close)           p_open = NULL; // Don't pass our bool* to Begin
+    if (no_close)   show_window = NULL;
 
     static ImGuiWindowData gui_data;
-    if (gui_data.ShowMainMenuBar) { ShowAppMainMenuBar(); }
-    if (gui_data.ShowAppAutoResize) {}
-    if (gui_data.ShowAppLongText) {}
-    if (gui_data.ShowAbout) { ShowAboutWindow(); }
+    //if (gui_data.ShowMainMenuBar) { ShowAppMainMenuBar(); }
+    //if (gui_data.ShowAppAutoResize) {}
+    //if (gui_data.ShowAppLongText) {}
+    //if (gui_data.ShowAbout) { ShowAboutWindow(); }
+
 
 
     // Main loop
@@ -264,16 +284,15 @@ int main(int argc, char** argv)
         //FrameRounding 
 
         //menu save
-        
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        //ShowWindowMenuBar(&gui_data);
 
         {
             ImGui::Begin("Hello, ImGui!", 0, window_flags);
             //ImGui::SetWindowSize(ImVec2(800,600), 0); // temp - cache this outside
             
+            ImGui::SeparatorText("Timer");
+
+
             ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             static float f = 0.0f;
@@ -285,11 +304,19 @@ int main(int argc, char** argv)
 
             ImGui::Spacing();
             ImGui::SeparatorText("ABOUT THIS DEMO:");
+            ImGui::Spacing();
 
             ImGui::Text("This is a hidden GLFW window with an ImGui interface.");
 
+
+            ImGui::SeparatorText("Processes");
+
             ImGui::End();
         };
+
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
 
         #pragma endregion
 
