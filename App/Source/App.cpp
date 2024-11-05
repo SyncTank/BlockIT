@@ -78,71 +78,6 @@ struct ImGuiWindowData
 
 };
 
-// Helper to wire demo markers located in code to an interactive browser
-typedef void (*ImGuiMarkerCallback)(const char* file, int line, const char* section, void* user_data);
-extern ImGuiMarkerCallback      GImGuiMarkerCallback;
-extern void* GImGuiMarkerCallbackUserData;
-ImGuiMarkerCallback             GImGuiMarkerCallback = NULL;
-void* GImGuiMarkerCallbackUserData = NULL;
-#define IMGUI_MARKER(section)  do { if (GImGuiMarkerCallback != NULL) GImGuiMarkerCallback(__FILE__, __LINE__, section, GImGuiMarkerCallbackUserData); } while (0)
-
-static void ShowWindowMenuBar(ImGuiWindowData* demo_data)
-{
-    IMGUI_MARKER("Menu");
-    if (ImGui::BeginMenuBar())
-    {
-        IMGUI_MARKER("Menu/File");
-        if (ImGui::BeginMenu("Menu"))
-        {
-            //IMGUI_DEMO_MARKER("Menu/File");
-            //ShowExampleMenuFile();
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Examples"))
-        {
-            IMGUI_MARKER("Menu/Examples");
-            ImGui::Text("Yes");
-            ImGui::MenuItem("N");
-
-            ImGui::EndMenu();
-        }
-        //if (ImGui::MenuItem("MenuItem")) {} // You can also use MenuItem() inside a menu bar!
-        if (ImGui::BeginMenu("Tools"))
-        {
-            IMGUI_MARKER("Menu/Tools");
-            ImGui::Text("Yes");
-            ImGui::MenuItem("N");
-
-            ImGui::EndMenu();
-        }
-        ImGui::EndMenuBar();
-    }
-}
-
-void static ShowAboutWindow()
-{
-    if (!ImGui::Begin("About", 0, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::End();
-        return;
-    }
-    ImGui::Text("By Rudy.");
-
-    ImGui::End();
-}
-
-static void PushStyleCompact()
-{
-    ImGuiStyle& style = ImGui::GetStyle();
-    ImGui::PushStyleVarY(ImGuiStyleVar_FramePadding, (float)(int)(style.FramePadding.y * 0.60f));
-    ImGui::PushStyleVarY(ImGuiStyleVar_ItemSpacing, (float)(int)(style.ItemSpacing.y * 0.60f));
-}
-
-static void PopStyleCompact()
-{
-    ImGui::PopStyleVar(2);
-}
-
 void convertWStringToCString(const std::wstring& wstr, char* cstr, size_t cstrSize) {
     size_t convertedChars = 0;
     errno_t err = wcstombs_s(&convertedChars, cstr, cstrSize, wstr.c_str(), _TRUNCATE);
@@ -153,20 +88,25 @@ void convertWStringToCString(const std::wstring& wstr, char* cstr, size_t cstrSi
 
 void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList)
 {
-    //App::getListIteams();
-    ImGuiListClipper clipper;
-    clipper.Begin(totalProcessList.size());
-
+    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
     static ImGuiTabBarFlags flags = 
         ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
 
     HelpMarker("This is a List of Processes which you can designate which to kill");
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {  }
+    ImGui::SameLine(0.0f, spacing);
+    if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {  }
 
     ImGui::Spacing();
     ImGui::Text("Active Processes");
     ImGui::SameLine();
     ImGui::Text("Murder List");
     ImGui::Spacing();
+
+    static std::wstring item_selected_idx = L""; // Here we store our selected data as an index.
+    static bool item_highlight = false;
+    std::wstring  item_highlighted_idx = L""; // Here we store our highlighted data as an index.
 
     if (ImGui::BeginTable("table1", 2, flags, ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 260)))
     {
@@ -180,33 +120,69 @@ void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcess
             char cstr[bufferSize];
             convertWStringToCString(key, cstr, bufferSize);
 
+            const bool is_selected = (item_selected_idx == key);
+
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text(cstr);
+            if (ImGui::Selectable(cstr, is_selected, ImGuiSelectableFlags_SpanAllColumns))
+                item_selected_idx = key;
 
             ImGui::TableNextColumn();
-            ImGui::Text("32");
+            char procSize[10];
+            sprintf(procSize, "%i", value.size());
+            ImGui::Text(procSize);
+
+            if (item_highlight && ImGui::IsItemHovered())
+                item_highlighted_idx = key;
+
+            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+
         }
         ImGui::EndTable();
     }
 
+    ImGui::SameLine();
 
-    if (ImGui::BeginTable("SelectableTable", 3)) {
-        for (int row = 0; row < 5; ++row) {
+    static std::wstring item_selected_idx2 = L""; // Here we store our selected data as an index.
+    static bool item_highlight2 = false;
+    std::wstring  item_highlighted_idx2 = L""; // Here we store our highlighted data as an index.
+
+    if (ImGui::BeginTable("table2", 2, flags, ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 260)))
+    {
+        ImGui::TableSetupColumn("Names");
+        ImGui::TableSetupColumn("Process");
+        ImGui::TableHeadersRow();
+
+        for (const auto& [key, value] : totalProcessList) // change totalProcessList to blacklist
+        {
+            const size_t bufferSize = 50;
+            char cstr[bufferSize];
+            convertWStringToCString(key, cstr, bufferSize);
+
+            const bool is_selected2 = (item_selected_idx2 == key);
+
             ImGui::TableNextRow();
-            for (int column = 0; column < 3; ++column) {
-                ImGui::TableSetColumnIndex(column);
-                char buf[32];
-                snprintf(buf, sizeof(buf), "Row %d Column %d", row, column);
-                if (ImGui::Selectable(buf, false, ImGuiSelectableFlags_SpanAllColumns)) {
-                    // Handle selection
-                    std::cout << "Row " << row << " selected" << std::endl;
-                }
-            }
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable(cstr, is_selected2, ImGuiSelectableFlags_SpanAllColumns))
+                item_selected_idx2 = key;
+
+            ImGui::TableNextColumn();
+            char procSize[10];
+            sprintf(procSize, "%i", value.size());
+            ImGui::Text(procSize);
+
+            if (item_highlight2 && ImGui::IsItemHovered())
+                item_highlighted_idx2 = key;
+
+            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+            if (is_selected2)
+                ImGui::SetItemDefaultFocus();
+
         }
         ImGui::EndTable();
     }
-
 
 }
 
@@ -275,8 +251,19 @@ int main(int argc, char** argv)
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-        style.WindowRounding = 0.0f;
+        style.WindowRounding = 3.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        style.WindowPadding = ImVec2(10,8);
+        style.ItemInnerSpacing = ImVec2(6,4);
+        style.ScrollbarSize = 6;
+        style.FrameRounding = 12;
+        style.TabRounding = 8;
+        style.CellPadding = ImVec2(6,3);
+        style.WindowTitleAlign = ImVec2(.5,.5);
+        style.WindowMenuButtonPosition = ImGuiDir_Right;
+        style.SelectableTextAlign = ImVec2(.15, 0);
+        style.SeparatorTextBorderSize = 1;
+
     }
 
     // Setup Platform/Renderer backends
@@ -312,7 +299,7 @@ int main(int argc, char** argv)
     Core::ProcessList(totalProcessList);
 
     static bool no_menu = true;
-    static bool no_collapse = true;
+    static bool no_collapse = false;
     static bool unsaved_document = false;
     static bool no_close = false;
 
@@ -321,7 +308,7 @@ int main(int argc, char** argv)
     if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
     if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
     if (no_scroll)          window_flags |= ImGuiWindowFlags_NoScrollbar;
-    if (no_close)           show_window = NULL;
+    if (no_close)           show_window = NULL; // Don't pass our bool* to Begin
 
     static ImGuiWindowData gui_data;
     //if (gui_data.ShowMainMenuBar) { ShowAppMainMenuBar(); }
@@ -370,32 +357,97 @@ int main(int argc, char** argv)
         //ShowWindowMenuBar(&gui_data);
 
         {
-            ImGui::Begin("Hello, ImGui!", 0, window_flags);
+            ImGui::Begin("BlockIT", &show_window, window_flags);
             //ImGui::SetWindowSize(ImVec2(800,600), 0); // temp - cache this outside
             
+            static float f = 0.0f;
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
-            static float f = 0.0f;
-            static int counter = 0;
-
-            if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
             ImGui::Spacing();
-            ImGui::SeparatorText("Timer");
+            ImGui::SeparatorText("Block Timers");
             ImGui::Spacing();
 
-            HelpMarker("This Countdown Timer Set in Minutes.");
-            ImGui::Text("I am a placeholder Text that will get replaced by timer");
+            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | ImGuiTabBarFlags_TabListPopupButton;
+            if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+            {
+                if (ImGui::BeginTabItem("Set 1"))
+                {
+                    ImGui::Button("Save");
+                    ImGui::Text("This is the Avocado tab!\nblah blah blah blah blah");
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Set 2"))
+                {
+                    ImGui::Button("Save");
+                    ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Set 3"))
+                {
+                    ImGui::Button("Save");
+                    ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Set 4"))
+                {
+                    ImGui::Button("Save");
+                    ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Set 5"))
+                {
+                    ImGui::Button("Save");
+                    ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
 
-            ImGui::Button("Set");
-            ImGui::SameLine();
-            ImGui::Button("Clear");
+            ImGui::SeparatorText("Block IT Now");
+            ImGui::Spacing();
+
+            {
+                HelpMarker("This Countdown Timer Set in Minutes.");
+                ImGui::SameLine();
+
+                static char str1[128] = "";
+                ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1));
+
+                ImGui::SameLine();
+
+                static char str2[128] = "";
+                ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
+
+                ImGui::Spacing();
+
+                ImGui::Button("Block");
+                ImGui::SameLine();
+                ImGui::Button("Pause");
+                ImGui::SameLine();
+                ImGui::Button("Cancel");
+            }
+
+            ImGui::SeparatorText("When to Block");
+            ImGui::Spacing();
+
+            {
+                ImGui::Text("Enter the time period within which to block these sites");
+                static char str3[128] = "";
+                ImGui::InputTextWithHint(" ", "Example", str3, IM_ARRAYSIZE(str3));
+                ImGui::SameLine();
+                ImGui::Button("All Day");
+
+                ImGui::Text("Enter the time period within which to block these sites");
+                static char str4[128] = "";
+                ImGui::InputTextWithHint("Minutes in every", "Mins", str4, IM_ARRAYSIZE(str4));
+                ImGui::SameLine();
+                static int item_current_2 = 0;
+                ImGui::Combo("combo 2 (one-liner)", &item_current_2, "aaaa\0bbbb\0cccc\0dddd\0eeee\0\0");
+            }
+
+            ImGui::Spacing();
 
             ImGui::SeparatorText("Processes");
-
             setTable(totalProcessList);
 
             ImGui::End();
@@ -404,6 +456,7 @@ int main(int argc, char** argv)
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
+
 
         #pragma endregion
 
