@@ -89,6 +89,10 @@ int main(int argc, char** argv)
     //io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
 
+    ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | ImGuiTabBarFlags_TabListPopupButton;
+
+    //App::loadData();
+
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
@@ -145,7 +149,7 @@ int main(int argc, char** argv)
     bool no_resize = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool no_menu = true;
-    bool no_collapse = false;
+    bool no_collapse = false;   // #TODO replace with minize
     bool unsaved_document = false;
     bool no_close = false;
 
@@ -204,7 +208,8 @@ int main(int argc, char** argv)
                 ImGui::Spacing();
             }
 
-            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | ImGuiTabBarFlags_TabListPopupButton;
+            // #TODO Setup a data structure to feed data in/out
+            // Settings for different Sets
             if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
             {
                 if (ImGui::BeginTabItem("Set 1"))

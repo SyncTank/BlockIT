@@ -65,6 +65,7 @@ namespace App
 
     void renderWindowContext()
     {
+        // #TODO - take these out
         std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
         Core::ProcessList(totalProcessList);
 
@@ -75,16 +76,19 @@ namespace App
             ImGui::SameLine();
             ImGui::PushItemWidth(75);
 
+            // #TODO add variables to save data
             static char str1[9] = "";
             ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1), 0, 0, 0);
 
             ImGui::SameLine();
 
+            // #TODO add variables to save 
             static char str2[9] = "";
             ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
 
             ImGui::Spacing();
 
+            // #TODO add logic to buttons 
             ImGui::Button("Block");
             ImGui::SameLine();
             ImGui::Button("Pause");
@@ -101,18 +105,25 @@ namespace App
             ImGui::PushItemWidth(150);
 
             ImGui::Text("Enter the time period within which to block these sites");
+
+            // #TODO add variables to save 
             static char str3[128] = "";
             ImGui::InputTextWithHint(" ", "Example", str3, IM_ARRAYSIZE(str3));
             ImGui::SameLine();
+
+            // #TODO add logic
             ImGui::Button("All Day");
 
             ImGui::PopItemWidth();
             ImGui::Spacing();
             ImGui::PushItemWidth(75);
 
+            // #TODO add variables to save 
             static char str4[128] = "";
             ImGui::InputTextWithHint("Minutes in every", "Mins", str4, IM_ARRAYSIZE(str4));
             ImGui::SameLine();
+
+            // #TODO add variables to save 
             static int item_current_2 = 0;
             ImGui::Combo("Span", &item_current_2, "Hour\0Day\0Week\0Year\0\0");
 
@@ -127,6 +138,8 @@ namespace App
 
     void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList)
     {
+
+        // #TODO - take this all out
         float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
 
         static ImGuiTabBarFlags parentFlags =
@@ -142,15 +155,14 @@ namespace App
         if (route_type != ImGuiInputFlags_RouteGlobal)
             flags &= ~(ImGuiInputFlags_RouteOverFocused | ImGuiInputFlags_RouteOverActive | ImGuiInputFlags_RouteUnlessBgFocused);
 
-        static float offset_x = 140.0f;
-
         HelpMarker("This is a List of Processes which you can designate which to kill, the 'save' button sets the present.");
         ImGui::SameLine();
         ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags | ImGuiInputFlags_Tooltip);
         ImGui::Button("Save");
         ImGui::SameLine();
 
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset_x);
+        // #TODO add logic to pass back to each other
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 140.0f);
         if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {}
         ImGui::SameLine(0.0f, spacing);
         if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {}
@@ -168,6 +180,9 @@ namespace App
             ImGui::TableHeadersRow();
             ImGui::TableNextColumn();
 
+            // #TODO
+            // Update this in intervals to not bog down the system
+            // Also look into deffering it with a thread to update and check if a update to main list is needed
             if (ImGui::BeginTable("table1", 1, tableflags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
                 for (const auto& [key, value] : totalProcessList)
@@ -200,6 +215,8 @@ namespace App
             static bool item_highlight2 = false;
             std::wstring  item_highlighted_idx2 = L""; // Here we store our highlighted data as an index.
 
+            // #TODO
+            // This table will only get updated if a new item is added and when loaded
             if (ImGui::BeginTable("table2", 1, tableflags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
                 for (const auto& [key, value] : totalProcessList) // change totalProcessList to blacklist
