@@ -859,7 +859,8 @@ namespace ImGui
     IMGUI_API float         GetColumnWidth(int column_index = -1);                              // get column width (in pixels). pass -1 to use current column
     IMGUI_API void          SetColumnWidth(int column_index, float width);                      // set column width (in pixels). pass -1 to use current column
     IMGUI_API float         GetColumnOffset(int column_index = -1);                             // get position of column line (in pixels, from the left side of the contents region). pass -1 to use current column, otherwise 0..GetColumnsCount() inclusive. column 0 is typically 0.0f
-    IMGUI_API void          SetColumnOffset(int column_index, float offset_x);                  // set position of column line (in pixels, from the left side of the contents region). pass -1 to use current column
+    IMGUI_API void          SetColumnOffset(int column_index, float 
+    );                  // set position of column line (in pixels, from the left side of the contents region). pass -1 to use current column
     IMGUI_API int           GetColumnsCount();
 
     // Tab Bars, Tabs
