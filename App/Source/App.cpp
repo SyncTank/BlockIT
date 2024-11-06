@@ -7,11 +7,9 @@
 // - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
 // - Introduction, links and more at the top of imgui.cpp
 
-#include "imgui.h"
+#include "List.h" // includes the imgui.h
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "List.h"
-#include <stdio.h>
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -34,227 +32,6 @@ static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
-
-#pragma region Helpers
-
-static void HelpMarker(const char* desc)
-{
-    ImGui::TextDisabled("(?)");
-    if (ImGui::BeginItemTooltip())
-    {
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(desc);
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-    }
-}
-
-// Data to be shared accross different functions of the demo.
-struct ImGuiWindowData
-{
-    // Examples Apps (accessible from the "Examples" menu)
-    bool ShowMainMenuBar = false;
-    bool ShowAppAssetsBrowser = false;
-    bool ShowAppConsole = false;
-    bool ShowAppCustomRendering = false;
-    bool ShowAppDocuments = false;
-    bool ShowAppDockSpace = false;
-    bool ShowAppLog = false;
-    bool ShowAppLayout = false;
-    bool ShowAppPropertyEditor = false;
-    bool ShowAppSimpleOverlay = false;
-    bool ShowAppAutoResize = false;
-    bool ShowAppConstrainedResize = false;
-    bool ShowAppFullscreen = false;
-    bool ShowAppLongText = false;
-    bool ShowAppWindowTitles = false;
-
-    // Dear ImGui Tools (accessible from the "Tools" menu)
-    bool ShowMetrics = false;
-    bool ShowDebugLog = false;
-    bool ShowIDStackTool = false;
-    bool ShowStyleEditor = false;
-    bool ShowAbout = false;
-
-};
-
-void convertWStringToCString(const std::wstring& wstr, char* cstr, size_t cstrSize) {
-    size_t convertedChars = 0;
-    errno_t err = wcstombs_s(&convertedChars, cstr, cstrSize, wstr.c_str(), _TRUNCATE);
-    if (err != 0) {
-        std::cerr << "Conversion error occurred." << std::endl;
-    }
-}
-
-void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList)
-{
-    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-
-    static ImGuiTabBarFlags parentFlags = 
-         ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_Borders;
-
-    static ImGuiTabBarFlags tableflags = 
-        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
-
-    static ImGuiInputFlags route_options = ImGuiInputFlags_Repeat;
-    static ImGuiInputFlags route_type = ImGuiInputFlags_RouteFocused;
-
-    ImGuiInputFlags flags = route_type | route_options; // Merged flags
-    if (route_type != ImGuiInputFlags_RouteGlobal)
-        flags &= ~(ImGuiInputFlags_RouteOverFocused | ImGuiInputFlags_RouteOverActive | ImGuiInputFlags_RouteUnlessBgFocused);
-
-    static float offset_x = 140.0f;
-    
-    HelpMarker("This is a List of Processes which you can designate which to kill, the 'save' button sets the present.");
-    ImGui::SameLine();
-    ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags | ImGuiInputFlags_Tooltip);
-    ImGui::Button("Save");
-    ImGui::SameLine();
-    
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset_x);
-    if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {  }
-    ImGui::SameLine(0.0f, spacing);
-    if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {  }
-
-    ImGui::Spacing();
-
-    static std::wstring item_selected_idx = L""; // Here we store our selected data as an index.
-    static bool item_highlight = false;
-    std::wstring  item_highlighted_idx = L""; // Here we store our highlighted data as an index.
-
-    if (ImGui::BeginTable("Parent_Table", 2, parentFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
-    {
-        ImGui::TableSetupColumn("Active Processes");
-        ImGui::TableSetupColumn("Murder List");
-        ImGui::TableHeadersRow();
-        ImGui::TableNextColumn();
-
-        if (ImGui::BeginTable("table1", 1, tableflags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
-        {
-            for (const auto& [key, value] : totalProcessList)
-            {
-                const size_t bufferSize = 50;
-                char cstr[bufferSize];
-                convertWStringToCString(key, cstr, bufferSize);
-
-                const bool is_selected = (item_selected_idx == key);
-
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                if (ImGui::Selectable(cstr, is_selected, ImGuiSelectableFlags_SpanAllColumns))
-                    item_selected_idx = key;
-
-                if (item_highlight && ImGui::IsItemHovered())
-                    item_highlighted_idx = key;
-
-                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
-
-            }
-            ImGui::EndTable();
-        }
-
-        ImGui::TableNextColumn();
-
-        static std::wstring item_selected_idx2 = L""; // Here we store our selected data as an index.
-        static bool item_highlight2 = false;
-        std::wstring  item_highlighted_idx2 = L""; // Here we store our highlighted data as an index.
-
-        if (ImGui::BeginTable("table2", 1, tableflags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
-        {
-            for (const auto& [key, value] : totalProcessList) // change totalProcessList to blacklist
-            {
-                const size_t bufferSize = 50;
-                char cstr[bufferSize];
-                convertWStringToCString(key, cstr, bufferSize);
-
-                const bool is_selected2 = (item_selected_idx2 == key);
-
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                if (ImGui::Selectable(cstr, is_selected2, ImGuiSelectableFlags_SpanAllColumns))
-                    item_selected_idx2 = key;
-
-                if (item_highlight2 && ImGui::IsItemHovered())
-                    item_highlighted_idx2 = key;
-
-                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                if (is_selected2)
-                    ImGui::SetItemDefaultFocus();
-
-            }
-            ImGui::EndTable();
-        }
-
-        ImGui::EndTable();
-    }
-    //ImGui::SameLine();
-}
-
-void renderWindowContext()
-{
-    std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
-    Core::ProcessList(totalProcessList);
-
-    ImGui::SeparatorText("Block IT Now");
-    ImGui::Spacing();
-    {
-        HelpMarker("This Countdown Timer Set in Minutes.");
-        ImGui::SameLine();
-        ImGui::PushItemWidth(75);
-
-        static char str1[9] = "";
-        ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1), 0, 0, 0);
-
-        ImGui::SameLine();
-
-        static char str2[9] = "";
-        ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
-
-        ImGui::Spacing();
-
-        ImGui::Button("Block");
-        ImGui::SameLine();
-        ImGui::Button("Pause");
-        ImGui::SameLine();
-        ImGui::Button("Cancel");
-
-        ImGui::PopItemWidth();
-    }
-
-    ImGui::SeparatorText("When to Block");
-    ImGui::Spacing();
-
-    {
-        ImGui::PushItemWidth(150);
-
-        ImGui::Text("Enter the time period within which to block these sites");
-        static char str3[128] = "";
-        ImGui::InputTextWithHint(" ", "Example", str3, IM_ARRAYSIZE(str3));
-        ImGui::SameLine();
-        ImGui::Button("All Day");
-
-        ImGui::PopItemWidth();
-        ImGui::Spacing();
-        ImGui::PushItemWidth(75);
-
-        static char str4[128] = "";
-        ImGui::InputTextWithHint("Minutes in every", "Mins", str4, IM_ARRAYSIZE(str4));
-        ImGui::SameLine();
-        static int item_current_2 = 0;
-        ImGui::Combo("Span", &item_current_2, "Hour\0Day\0Week\0Year\0\0");
-
-        ImGui::PopItemWidth();
-    }
-
-    ImGui::Spacing();
-
-    ImGui::SeparatorText("Processes");
-    setTable(totalProcessList);
-}
-
-#pragma endregion
 
 // Main code
 #ifdef _WIN32
@@ -358,18 +135,19 @@ int main(int argc, char** argv)
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
 
-    // Our state data
+    #pragma region windowFlags
+
+    // Our flags for the Window Context
     bool show_demo_window = true;
     bool show_window = true;
-    bool no_scroll = true;
     bool show_debug_frame = true;
+    bool no_scroll = true;
     bool no_resize = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    static bool no_menu = true;
-    static bool no_collapse = false;
-    static bool unsaved_document = false;
-    static bool no_close = false;
+    bool no_menu = true;
+    bool no_collapse = false;
+    bool unsaved_document = false;
+    bool no_close = false;
 
     ImGuiWindowFlags window_flags = 0;
     if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
@@ -379,13 +157,10 @@ int main(int argc, char** argv)
     if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
     if (no_close)           show_window = NULL; // Don't pass our bool* to Begin
 
-    static ImGuiWindowData gui_data;
-    //if (gui_data.ShowMainMenuBar) { ShowAppMainMenuBar(); }
-    //if (gui_data.ShowAppAutoResize) {}
-    //if (gui_data.ShowAppLongText) {}
-    //if (gui_data.ShowAbout) { ShowAboutWindow(); }
+    const ImVec2 windowSize = ImVec2(500, 650);
+    const ImGuiCond windowCondor = 0;
 
-
+    #pragma endregion
 
     // Main loop
 #ifdef __EMSCRIPTEN__
@@ -416,12 +191,9 @@ int main(int argc, char** argv)
 
         #pragma region UI Components
 
-        //menu save
-        //ShowWindowMenuBar(&gui_data);
-
         {
             ImGui::Begin("BlockIT", &show_window, window_flags);
-            ImGui::SetWindowSize(ImVec2(500, 650), 0); // temp - cache this outside
+            ImGui::SetWindowSize(windowSize, windowCondor);
 
             if (show_debug_frame)
             {
@@ -437,27 +209,27 @@ int main(int argc, char** argv)
             {
                 if (ImGui::BeginTabItem("Set 1"))
                 {
-                    renderWindowContext();
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 2"))
                 {
-                    renderWindowContext();
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 3"))
                 {
-                    renderWindowContext();
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 4"))
                 {
-                    renderWindowContext();
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 5"))
                 {
-                    renderWindowContext();
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();
@@ -465,8 +237,6 @@ int main(int argc, char** argv)
 
             ImGui::End();
         };
-
-
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
