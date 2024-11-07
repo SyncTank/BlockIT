@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 #include "imgui.h"
-#include "simdjson.h"
+//#include "simdjson.h"
 #include <fstream>
 #include <stdio.h>
 
@@ -14,7 +14,7 @@ namespace App
 	void testLoad();
 
 	// https://github.com/simdjson/simdjson
-	void saveData(const std::string& filename, const simdjson::dom::element& jsonData); 
+	//void saveData(const std::string& filename, const simdjson::dom::element& jsonData); 
 	
 	//simdjson::dom::element loadData(const std::string& filename);
 

@@ -2,6 +2,16 @@
 
 namespace App 
 {
+    ImGuiTabBarFlags parentFlags =
+        ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_Borders;
+
+    ImGuiTabBarFlags tableFlags =
+        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
+
+    ImGuiInputFlags route_options = ImGuiInputFlags_Repeat;
+    ImGuiInputFlags route_type = ImGuiInputFlags_RouteFocused;
+
+    ImGuiInputFlags flags = route_type | route_options;
 
 	void testData()
 	{
@@ -29,13 +39,13 @@ namespace App
        //std::cout << "City: " << city << "\n";
     }
 
-    void saveData(const std::string& filename, const simdjson::dom::element& jsonData) {
-        std::ofstream file(filename);
-        if (file.is_open()) {
-            file << jsonData;
-            file.close();
-        }
-    }
+    //void saveData(const std::string& filename, const simdjson::dom::element& jsonData) {
+    //    std::ofstream file(filename);
+    //    if (file.is_open()) {
+    //        file << jsonData;
+    //        file.close();
+    //    }
+    //}
 
     //simdjson::dom::element loadData(const std::string& filename) {
     //    std::ifstream file(filename);
@@ -69,7 +79,7 @@ namespace App
         std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
         Core::ProcessList(totalProcessList);
 
-        ImGui::SeparatorText("Block IT Now");
+        ImGui::SeparatorText("Block Now");
         ImGui::Spacing();
         {
             HelpMarker("This Countdown Timer Set in Minutes.");
@@ -102,12 +112,13 @@ namespace App
         ImGui::Spacing();
 
         {
+            HelpMarker("This Countdown Timer Set in Minutes.");
             ImGui::PushItemWidth(150);
 
             ImGui::Text("Enter the time period within which to block these sites");
 
             // #TODO add variables to save 
-            static char str3[128] = "";
+            static char str3[64] = "";
             ImGui::InputTextWithHint(" ", "Example", str3, IM_ARRAYSIZE(str3));
             ImGui::SameLine();
 
@@ -118,8 +129,9 @@ namespace App
             ImGui::Spacing();
             ImGui::PushItemWidth(75);
 
+            ImGui::Text("Enter the time limit after which to block these sites:");
             // #TODO add variables to save 
-            static char str4[128] = "";
+            static char str4[9] = "";
             ImGui::InputTextWithHint("Minutes in every", "Mins", str4, IM_ARRAYSIZE(str4));
             ImGui::SameLine();
 
@@ -135,36 +147,19 @@ namespace App
         ImGui::SeparatorText("Processes");
         setTable(totalProcessList);
     }
-
+        
     void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList)
     {
-
-        // #TODO - take this all out
-        float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-
-        static ImGuiTabBarFlags parentFlags =
-            ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_Borders;
-
-        static ImGuiTabBarFlags tableflags =
-            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
-
-        static ImGuiInputFlags route_options = ImGuiInputFlags_Repeat;
-        static ImGuiInputFlags route_type = ImGuiInputFlags_RouteFocused;
-
-        ImGuiInputFlags flags = route_type | route_options; // Merged flags
-        if (route_type != ImGuiInputFlags_RouteGlobal)
-            flags &= ~(ImGuiInputFlags_RouteOverFocused | ImGuiInputFlags_RouteOverActive | ImGuiInputFlags_RouteUnlessBgFocused);
-
-        HelpMarker("This is a List of Processes which you can designate which to kill, the 'save' button sets the present.");
+        HelpMarker("Below is a list of active processes that can be designate to kill, the 'Browse' allows manual addition.");
         ImGui::SameLine();
         ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags | ImGuiInputFlags_Tooltip);
-        ImGui::Button("Save");
+        ImGui::Button("Browse");
         ImGui::SameLine();
 
         // #TODO add logic to pass back to each other
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 140.0f);
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 130.0f);
         if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {}
-        ImGui::SameLine(0.0f, spacing);
+        ImGui::SameLine(0.0f, 5.0f);
         if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {}
 
         ImGui::Spacing();
@@ -183,7 +178,7 @@ namespace App
             // #TODO
             // Update this in intervals to not bog down the system
             // Also look into deffering it with a thread to update and check if a update to main list is needed
-            if (ImGui::BeginTable("table1", 1, tableflags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
+            if (ImGui::BeginTable("table1", 1, tableFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
                 for (const auto& [key, value] : totalProcessList)
                 {
@@ -217,7 +212,7 @@ namespace App
 
             // #TODO
             // This table will only get updated if a new item is added and when loaded
-            if (ImGui::BeginTable("table2", 1, tableflags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
+            if (ImGui::BeginTable("table2", 1, tableFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
                 for (const auto& [key, value] : totalProcessList) // change totalProcessList to blacklist
                 {

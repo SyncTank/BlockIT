@@ -33,6 +33,8 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+
+
 // Main code
 #ifdef _WIN32
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -91,8 +93,6 @@ int main(int argc, char** argv)
 
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | ImGuiTabBarFlags_TabListPopupButton;
 
-    //App::loadData();
-
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
@@ -148,10 +148,9 @@ int main(int argc, char** argv)
     bool no_scroll = true;
     bool no_resize = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    bool no_menu = true;
-    bool no_collapse = false;   // #TODO replace with minize
+    bool no_menu = false;
     bool unsaved_document = false;
-    bool no_close = false;
+    static bool no_collapse = true;
 
     ImGuiWindowFlags window_flags = 0;
     if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
@@ -159,9 +158,8 @@ int main(int argc, char** argv)
     if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
     if (no_scroll)          window_flags |= ImGuiWindowFlags_NoScrollbar;
     if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
-    if (no_close)           show_window = NULL; // Don't pass our bool* to Begin
 
-    const ImVec2 windowSize = ImVec2(500, 650);
+    const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
 
     #pragma endregion
@@ -195,9 +193,37 @@ int main(int argc, char** argv)
 
         #pragma region UI Components
 
+        if (show_window)
         {
-            ImGui::Begin("BlockIT", &show_window, window_flags);
+            // Main body of the Demo window starts here.
+            ImGui::Begin("BlockIT", 0, window_flags);
+
             ImGui::SetWindowSize(windowSize, windowCondor);
+
+            if (ImGui::BeginMenuBar())
+            {
+                if (ImGui::BeginMenu("Quit"))
+                {
+                    show_window = false;
+                    ImGui::EndMenu();
+                }
+
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0)); // Remove background color
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.26f, .59f, .98f, .8f));   // Remove hover color
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.26f, .59f, .98f, 1.0f));   // Remove active color
+                if (ImGui::Button("Minimize"))
+                {
+                    glfwIconifyWindow(window);
+                }
+
+                if (ImGui::Button("Save"))
+                {
+                    // #TODO : Add Save of the Set here
+                }
+
+                ImGui::PopStyleColor(3);
+                ImGui::EndMenuBar();
+            }
 
             if (show_debug_frame)
             {
@@ -239,13 +265,17 @@ int main(int argc, char** argv)
                 }
                 ImGui::EndTabBar();
             }
-
             ImGui::End();
-        };
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+            // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+            if (show_demo_window)
+                ImGui::ShowDemoWindow(&show_demo_window);
+
+        }
+        else
+        {
+            return 0;
+        }
 
         #pragma endregion
 
