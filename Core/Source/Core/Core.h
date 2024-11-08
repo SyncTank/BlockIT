@@ -5,6 +5,9 @@
 #endif
 
 #include <iostream>
+#include <fstream>
+#include <stdio.h>
+
 #include <psapi.h>
 #include <tchar.h>
 #include <vector>

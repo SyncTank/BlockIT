@@ -33,15 +33,12 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-
-
 // Main code
 #ifdef _WIN32
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #else
 int main(int argc, char** argv)
 #endif
-
 {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
@@ -162,6 +159,8 @@ int main(int argc, char** argv)
     const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
 
+    App::init(); // setup function - preloads stuff
+
     #pragma endregion
 
     // Main loop
@@ -195,7 +194,7 @@ int main(int argc, char** argv)
 
         if (show_window)
         {
-            // Main body of the Demo window starts here.
+            // Main body
             ImGui::Begin("BlockIT", 0, window_flags);
 
             ImGui::SetWindowSize(windowSize, windowCondor);
@@ -218,7 +217,11 @@ int main(int argc, char** argv)
 
                 if (ImGui::Button("Save"))
                 {
-                    // #TODO : Add Save of the Set here
+                    App::writeAppFileOut();
+                }
+                if (ImGui::Button("Load"))
+                {
+                    App::folderSetup();
                 }
 
                 ImGui::PopStyleColor(3);
@@ -234,33 +237,32 @@ int main(int argc, char** argv)
                 ImGui::Spacing();
             }
 
-            // #TODO Setup a data structure to feed data in/out
             // Settings for different Sets
             if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
             {
                 if (ImGui::BeginTabItem("Set 1"))
                 {
-                    App::renderWindowContext();
+                    App::renderWindowContext(0);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 2"))
                 {
-                    App::renderWindowContext();
+                    App::renderWindowContext(1);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 3"))
                 {
-                    App::renderWindowContext();
+                    App::renderWindowContext(2);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 4"))
                 {
-                    App::renderWindowContext();
+                    App::renderWindowContext(3);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 5"))
                 {
-                    App::renderWindowContext();
+                    App::renderWindowContext(4);
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();
@@ -270,7 +272,6 @@ int main(int argc, char** argv)
             // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
             if (show_demo_window)
                 ImGui::ShowDemoWindow(&show_demo_window);
-
         }
         else
         {

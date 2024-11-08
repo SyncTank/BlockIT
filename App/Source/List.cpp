@@ -13,45 +13,91 @@ namespace App
 
     ImGuiInputFlags flags = route_type | route_options;
 
-	void testData()
-	{
-        //simdjson::dom::parser parser;
-        //simdjson::dom::element jsonData = parser.parse(R"({
-        //"name": "John Doe",
-        //"age": 30,
-        //"city": "New York"
-        //})");
-        //
-        //std::string jsonString = simdjson::to_string(jsonData);
-        //saveData("data.json", jsonData);
-	}
+    std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
+    std::vector<std::wstring> blackList;
+    const char* allDay[4] = { "Hour" , "Day", "Week", "Year" };
+    int databuffers::item_current_2 = 0;
 
-    void testLoad()
+    char databuffers::str1[9] = "";
+    char databuffers::str2[9] = "";
+    char databuffers::str3[9] = "";
+    char databuffers::str4[9] = "";
+
+    // Used for saving
+    std::string configPath;
+    std::string filePath;
+
+    void init()
     {
-       //simdjson::dom::element jsonData = loadData("data.json");
-       //
-       //std::string name = jsonData["name"];
-       //int age = jsonData["age"];
-       //std::string city = jsonData["city"];
-       //
-       //std::cout << "Name: " << name << "\n";
-       //std::cout << "Age: " << age << "\n";
-       //std::cout << "City: " << city << "\n";
+        Core::ProcessList(totalProcessList);
+
+        if (App::folderSetup())
+        {
+            std::cerr << "Shit dead. \n" << std::endl;
+            return;
+        }
+
+        //writeAppFile();
+
     }
 
-    //void saveData(const std::string& filename, const simdjson::dom::element& jsonData) {
-    //    std::ofstream file(filename);
-    //    if (file.is_open()) {
-    //        file << jsonData;
-    //        file.close();
-    //    }
-    //}
+    // checks if directory exists if not make it, sets file path
+    bool folderSetup() 
+    {
+        const char* homeDir = getenv("HOME");
+        if (!homeDir) {
+        #ifdef _WIN32
+            homeDir = getenv("LOCALAPPDATA"); // Use USERPROFILE on Windows
+        #endif
+            if (!homeDir) {
+                std::cerr << "HOME environment variable not found." << std::endl;
+                return 1;
+            }
+        }
 
-    //simdjson::dom::element loadData(const std::string& filename) {
-    //    std::ifstream file(filename);
-    //    //std::string jsonContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    //    return simdjson::dom::parser().parse(jsonContent);
-    //}
+        configPath = std::string(homeDir) + "\\BlockIT";
+        filePath = configPath + "\\settings.json";
+
+        // Create the directory if it doesn't exist
+        if (MKDIR(configPath.c_str()) && errno != EEXIST) {
+            std::cerr << "Failed to create directory: " << strerror(errno) << std::endl;
+            return 1;
+        }
+
+        // buffer that reads settings to load up
+        char inStreamBuffer[128];
+        std::ifstream inFile(filePath);
+        if (inFile.is_open())
+        {
+            inFile.read(inStreamBuffer, 128);
+            inFile.close();
+
+            readAppFileIn(inStreamBuffer);
+        }
+        
+        return 0;
+    }
+
+    // Write DATA out to filePath
+    void writeAppFileOut()
+    {
+        // # TODO: Add argument into function to output
+        std::ofstream outFile(filePath);
+        if (outFile.is_open()) {
+            outFile << "Hello, .fdsfconfig!";
+            outFile.close();
+            //std::cout << "Data written to " << filePath << std::endl;
+        }
+        else {
+            std::cerr << "Failed to open file for writing." << std::endl;
+        }
+    }
+
+    // Load the variables from the file into the application's presets
+    void readAppFileIn(const char* inStreamBuffer)
+    {
+
+    }
 
     void convertWStringToCString(const std::wstring& wstr, char* cstr, size_t cstrSize) {
         size_t convertedChars = 0;
@@ -59,6 +105,36 @@ namespace App
         if (err != 0) {
             std::cerr << "Conversion error occurred." << std::endl;
         }
+    }
+
+    std::wstring convertToWString(const char* charArray) {
+        size_t length = std::mbstowcs(nullptr, charArray, 0) + 1; // Get the length of the wide string
+        std::wstring wstr(length, L'\0'); // Create a wide string with the required length
+        std::mbstowcs(&wstr[0], charArray, length); // Convert the char array to a wide string
+        return wstr;
+    }
+
+    std::wstring sliceName(const char* name)
+    {
+        size_t sizeName = std::strlen(name);
+        int stop = 0;
+        std::wstring newName = L"";
+
+        for (int i = sizeName; i > 0; i--)
+        {
+            if (name[i] == '\\' )
+            {
+                stop = i;
+                break;
+            }
+        }
+
+        for (int i = stop + 1; i < sizeName; i++)
+        {
+            newName += name[i];
+        }
+
+        return newName;
     }
 
     static void HelpMarker(const char* desc)
@@ -73,38 +149,39 @@ namespace App
         }
     }
 
-    void renderWindowContext()
+    void renderWindowContext(int preset)
     {
-        // #TODO - take these out
-        std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
-        Core::ProcessList(totalProcessList);
-
+        static int statusFlag;
         ImGui::SeparatorText("Block Now");
         ImGui::Spacing();
         {
             HelpMarker("This Countdown Timer Set in Minutes.");
             ImGui::SameLine();
             ImGui::PushItemWidth(75);
-
-            // #TODO add variables to save data
-            static char str1[9] = "";
-            ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1), 0, 0, 0);
+            
+            ImGui::InputTextWithHint("Hour(s)", "H", databuffers::str1, IM_ARRAYSIZE(databuffers::str1), 0, 0, 0);
 
             ImGui::SameLine();
-
-            // #TODO add variables to save 
-            static char str2[9] = "";
-            ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
-
+            ImGui::InputTextWithHint("Minute(s)", "Mins", databuffers::str2, IM_ARRAYSIZE(databuffers::str2));
             ImGui::Spacing();
 
-            // #TODO add logic to buttons 
-            ImGui::Button("Block");
-            ImGui::SameLine();
-            ImGui::Button("Pause");
-            ImGui::SameLine();
-            ImGui::Button("Cancel");
+            if (ImGui::Button("Block"))
+            {
 
+            }
+            
+            ImGui::SameLine();
+            if (ImGui::Button("Pause"))
+            {
+
+            }
+            
+            ImGui::SameLine(); 
+            if (ImGui::Button("Cancel"))
+            {
+                //testLoad();
+            }
+            
             ImGui::PopItemWidth();
         }
 
@@ -117,27 +194,24 @@ namespace App
 
             ImGui::Text("Enter the time period within which to block these sites");
 
-            // #TODO add variables to save 
-            static char str3[64] = "";
-            ImGui::InputTextWithHint(" ", "Example", str3, IM_ARRAYSIZE(str3));
+            ImGui::InputTextWithHint(" ", "Example. Input TimeSpan 0900-1200", databuffers::str3, IM_ARRAYSIZE(databuffers::str3));
             ImGui::SameLine();
 
-            // #TODO add logic
-            ImGui::Button("All Day");
+            if (ImGui::Button("All Day"))
+            {
+
+            }
 
             ImGui::PopItemWidth();
             ImGui::Spacing();
             ImGui::PushItemWidth(75);
 
             ImGui::Text("Enter the time limit after which to block these sites:");
-            // #TODO add variables to save 
-            static char str4[9] = "";
-            ImGui::InputTextWithHint("Minutes in every", "Mins", str4, IM_ARRAYSIZE(str4));
+
+            ImGui::InputTextWithHint("Minutes in every", "Mins", databuffers::str4, IM_ARRAYSIZE(databuffers::str4));
             ImGui::SameLine();
 
-            // #TODO add variables to save 
-            static int item_current_2 = 0;
-            ImGui::Combo("Span", &item_current_2, "Hour\0Day\0Week\0Year\0\0");
+            ImGui::Combo("Span", &databuffers::item_current_2, "Hour\0Day\0Week\0Year\0\0");
 
             ImGui::PopItemWidth();
         }
@@ -153,7 +227,43 @@ namespace App
         HelpMarker("Below is a list of active processes that can be designate to kill, the 'Browse' allows manual addition.");
         ImGui::SameLine();
         ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags | ImGuiInputFlags_Tooltip);
-        ImGui::Button("Browse");
+        
+        if (ImGui::Button("Browse"))
+        {
+            NFD_Init();
+
+            nfdu8char_t* outPath;
+            nfdu8filteritem_t filters[1] = { { "JSON files", "json" }};
+            nfdopendialogu8args_t args = { 0 };
+            args.filterList = filters;
+            args.filterCount = 1;
+            nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
+
+            if (result == NFD_OKAY)
+            {
+                puts("Success!");
+                puts(outPath);
+                std::wstring cutName = sliceName(outPath);
+                if (std::find(blackList.begin(), blackList.end(), cutName) == blackList.end())
+                {
+                    blackList.emplace_back(cutName);
+                }
+                
+                NFD_FreePathU8(outPath); // Free Mem
+            }
+            else if (result == NFD_CANCEL)
+            {
+                puts("User pressed cancel.");
+            }
+            else
+            {
+                printf("Error: %s\n", NFD_GetError());
+            }
+
+            NFD_Quit();
+
+        }
+        
         ImGui::SameLine();
 
         // #TODO add logic to pass back to each other
@@ -214,7 +324,7 @@ namespace App
             // This table will only get updated if a new item is added and when loaded
             if (ImGui::BeginTable("table2", 1, tableFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
-                for (const auto& [key, value] : totalProcessList) // change totalProcessList to blacklist
+                for (const auto& key : blackList) 
                 {
                     const size_t bufferSize = 50;
                     char cstr[bufferSize];
@@ -230,7 +340,6 @@ namespace App
                     if (item_highlight2 && ImGui::IsItemHovered())
                         item_highlighted_idx2 = key;
 
-                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                     if (is_selected2)
                         ImGui::SetItemDefaultFocus();
 

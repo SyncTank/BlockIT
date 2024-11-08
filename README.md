@@ -9,7 +9,7 @@ The example executables are included in the Binaries folder. Otherwise, check th
 Make sure to have opengl and glfw installed on the machine to compile.
 I recommend using vcpkg for this as it automatically sets itself up with studio with no additional configuration needed.
 
-The libraries use in the project are ImGUI, Opengl3, glfw, windows. #temp library simdjson added to handle json
+The libraries use in the project are ImGUI, Opengl3, glfw, windows, and nfd. 
 
 ### UseCase
 
