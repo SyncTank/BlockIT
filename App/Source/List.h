@@ -23,7 +23,7 @@ namespace App
 		char str3[16] = "";
 		char str4[9] = "";
 
-		std::vector<std::wstring> blackList;
+		std::unordered_map<std::wstring, std::vector<DWORD>> list;
 
 		int item_current_2 = 0;
 	};
@@ -32,7 +32,9 @@ namespace App
 
 	bool folderSetup();
 
-	void loadSet(int);
+	void clearBuffer();
+
+	void loadBuffer(int);
 
 	void writeAppFileOut(int);
 
@@ -42,12 +44,14 @@ namespace App
 
 	std::wstring convertToWString(const char* charArray);
 
+	std::wstring stringToWstring(const std::string& str);
+
 	void convertWStringToCString(const std::wstring& wstr, char* cstr, size_t cstrSize);
 
 	static void HelpMarker(const char* desc);
 	
-	void renderWindowContext(int);
+	void renderWindowContext();
 
-	void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>&, int);
+	void setTable();
 
 }

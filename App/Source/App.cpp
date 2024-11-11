@@ -159,6 +159,7 @@ int main(int argc, char** argv)
     const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
     static int setState = 0; // Defaults to 0/first set
+    static int pastState = 0; // used to check if loading is needed
 
     App::init(); // setup function - preloads stuff
 
@@ -222,7 +223,11 @@ int main(int argc, char** argv)
                 }
                 if (ImGui::Button("Load"))
                 {
-                    App::loadSet(setState);
+                    App::loadBuffer(setState);
+                }
+                if (ImGui::Button("Clear"))
+                {
+                    App::clearBuffer();
                 }
 
                 ImGui::PopStyleColor(3);
@@ -244,31 +249,56 @@ int main(int argc, char** argv)
                 if (ImGui::BeginTabItem("Set 1"))
                 {
                     setState = 0;
-                    App::renderWindowContext(setState);
+                    if (pastState != setState)
+                    {
+                        pastState = setState;
+                        App::loadBuffer(setState);
+                    }
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 2"))
                 {
                     setState = 1;
-                    App::renderWindowContext(setState);
+                    if (pastState != setState)
+                    {
+                        pastState = setState;
+                        App::loadBuffer(setState);
+                    }
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 3"))
                 {
                     setState = 2;
-                    App::renderWindowContext(setState);
+                    if (pastState != setState)
+                    {
+                        pastState = setState;
+                        App::loadBuffer(setState);
+                    }
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 4"))
                 {
                     setState = 3;
-                    App::renderWindowContext(setState);
+                    if (pastState != setState)
+                    {
+                        pastState = setState;
+                        App::loadBuffer(setState);
+                    }
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 5"))
                 {
                     setState = 4;
-                    App::renderWindowContext(setState);
+                    if (pastState != setState)
+                    {
+                        pastState = setState;
+                        App::loadBuffer(setState);
+                    }
+                    App::renderWindowContext();
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();

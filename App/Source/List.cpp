@@ -14,7 +14,6 @@ namespace App
     ImGuiInputFlags flags = route_type | route_options;
 
     std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
-    const char* allDay[4] = { "Hour" , "Day", "Week", "Year" };
     
     // Used as current contextbuffer for data send off
     static char str1[9] = "";
@@ -22,7 +21,11 @@ namespace App
     static char str3[16] = "";
     static char str4[9] = "";
     static int item_current_2 = 0;
+
+    std::unordered_map<std::wstring, std::vector<DWORD>> blackList;
+
     dataBuffer presets[5];
+    static bool isRunning = false;
 
     // Used for fileSaving
     std::string configPath;
@@ -37,18 +40,21 @@ namespace App
             std::cerr << "Shit dead. \n" << std::endl;
             return;
         }
+
+        // Load in the reference fields for the first tab into the buffer
+        loadBuffer(0);
     }
 
     // checks if directory exists if not make it, sets file path and inital data map
     bool folderSetup() 
     {
         char* homeDir = nullptr;
-        size_t len = 0;
-        errno_t err = _dupenv_s(&homeDir, &len, "HOME");
+        //size_t len = 0;
+        errno_t err = _dupenv_s(&homeDir, 0, "HOME");
         
         if (err != 0 || homeDir == nullptr) {
         #ifdef _WIN32
-            err = _dupenv_s(&homeDir, &len, "LOCALAPPDATA"); // Use LOCALAPPDATA on Windows
+            err = _dupenv_s(&homeDir, 0, "LOCALAPPDATA"); // Use LOCALAPPDATA on Windows
         #endif
             if (err != 0 || homeDir == nullptr) {
                 std::cerr << "HOME or LOCALAPPDATA environment variable not found." << std::endl;
@@ -61,7 +67,7 @@ namespace App
 
         // Create the directory if it doesn't exist
         if (_mkdir(configPath.c_str()) && errno != EEXIST) {
-            std::cerr << "Failed to create directory: " << strerror_s(homeDir,len,errno) << std::endl;
+            std::cerr << "Failed to create directory: " << strerror_s(homeDir,0,errno) << std::endl;
             free(homeDir); // Free the allocated memory
             return 1;
         }
@@ -82,7 +88,27 @@ namespace App
         return 0;
     }
 
-    // Write DATA out to filePath
+    void clearBuffer()
+    {
+        strncpy_s(str1, "", 0);
+        strncpy_s(str2, "", 0);
+        strncpy_s(str3, "", 0);
+        strncpy_s(str4, "", 0);
+        item_current_2 = 0;
+        blackList.clear();
+    }
+
+    void loadBuffer(int bufferData)
+    {
+        strncpy_s(str1, presets[bufferData].str1, 9);
+        strncpy_s(str2, presets[bufferData].str2, 9);
+        strncpy_s(str3, presets[bufferData].str3, 16);
+        strncpy_s(str4, presets[bufferData].str4, 9);
+        item_current_2 = presets[bufferData].item_current_2;
+        blackList = presets[bufferData].list;
+    }
+
+    // Write out all Buffers out to filePath (Updates the saveSet data thats currently in buffer)
     void writeAppFileOut(int saveSets)
     {
         // Saving the current contextBuffer into the state's preset
@@ -91,21 +117,25 @@ namespace App
         strncpy_s(presets[saveSets].str3, str3, 16);
         strncpy_s(presets[saveSets].str4, str4, 9);
         presets[saveSets].item_current_2 = item_current_2;
+        presets[saveSets].list = blackList;
 
-        std::ofstream outFile(filePath);
+        std::wofstream outFile(filePath);
         if (outFile.is_open()) 
         {
             for (int i = 0; i < 5; ++i)
             {
-                outFile << i << '\n';
-                outFile << '{' << '\n';
-                outFile << "str1" << ':' << presets[i].str1 << ',' << '\n';
-                outFile << "str2" << ':' << presets[i].str2 << ',' << '\n';
-                outFile << "str3" << ':' << presets[i].str3 << ',' << '\n';
-                outFile << "str4" << ':' << presets[i].str4 << ',' << '\n';
-                outFile << "Item_current_2" << ':' << presets[i].item_current_2 << ',' << '\n';
-                outFile << "Processes" << ':' << '\n'; // #TODO : parse processList
-                outFile << '}' << '\n';
+                outFile << i << '{' << '\n';
+                outFile << "str1" << ':' << presets[i].str1 << '\n';
+                outFile << "str2" << ':' << presets[i].str2 << '\n';
+                outFile << "str3" << ':' << presets[i].str3 << '\n';
+                outFile << "str4" << ':' << presets[i].str4 << '\n';
+                outFile << "Item_current_2" << ':' << presets[i].item_current_2 << '\n';
+                outFile << "Processes" << ':';
+                for (const auto& [key, value] : presets[i].list)
+                {
+                    outFile << key << ',';
+                }
+                outFile << '\n';
             }
             outFile.close();
         }
@@ -115,11 +145,6 @@ namespace App
         }
     }
 
-    void loadSet(int setState)
-    {
-
-    }
-
     // Load the variables from the file into the application's presets ran in startup
     void readAppFileIn(const char* inStreamBuffer)
     {
@@ -127,36 +152,68 @@ namespace App
         std::string strBuffer = "";
         int presetSets = 0;
         bool captureFlag = 0;
-        int setLength = 0;
+        int fieldCheck = 0;
         for (size_t i = 0; i <= len; i++)
         {
-            if (inStreamBuffer[i] == '}')
+            auto testChar = inStreamBuffer[i];
+
+            if (testChar == '\n' and fieldCheck != 5)
             {
-                strBuffer = "";
                 captureFlag = false;
+                continue;
             }
 
-            if (inStreamBuffer[i] == '{')
+            if (testChar == '{')
             {
-                std::stringstream(inStreamBuffer[i-2]) >> presetSets;
+                fieldCheck = 0;
+                presetSets = inStreamBuffer[i-1] - '0'; // Asi conversion to digit/int
+            }
+
+            if (captureFlag && fieldCheck < 5)
+            {
+                strBuffer += testChar;
+            }
+
+            if (fieldCheck == 5 && testChar == '\n')
+            {
+                presets[presetSets].item_current_2 = inStreamBuffer[i - 1] - '0';
+                continue;
+            }
+
+            if (fieldCheck == 6 && captureFlag && testChar != ',')
+            {
+                strBuffer += testChar;
+            }
+
+            if (testChar == ',')
+            {
+                presets[presetSets].list[stringToWstring(strBuffer)];
+                strBuffer = "";
+            }
+
+            if (testChar == ':')
+            {
+                if (strBuffer != "")
+                {
+                    switch (fieldCheck) {
+                        case 1:
+                            strncpy_s(presets[presetSets].str1, strBuffer.c_str(), strBuffer.length());
+                            break;
+                        case 2:
+                            strncpy_s(presets[presetSets].str2, strBuffer.c_str(), strBuffer.length());
+                            break;
+                        case 3:
+                            strncpy_s(presets[presetSets].str3, strBuffer.c_str(), strBuffer.length());
+                            break;
+                        case 4:
+                            strncpy_s(presets[presetSets].str4, strBuffer.c_str(), strBuffer.length());
+                            break;
+                    }
+                }
+
+                strBuffer = "";
+                fieldCheck++;
                 captureFlag = true;
-            }
-
-            if (inStreamBuffer[i] == ',')
-            {
-                if (setLength == 6)
-                {
-
-                }
-                else
-                {
-                    setLength++;
-                }
-            }
-
-            if (captureFlag)
-            {
-
             }
 
         }
@@ -189,6 +246,12 @@ namespace App
         wstr.resize(convertedChars - 1);
 
         return wstr;
+    }
+
+    // Function to convert std::string to std::wstring
+    std::wstring stringToWstring(const std::string& str) {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        return converter.from_bytes(str);
     }
 
     // Name slice for filePath
@@ -228,8 +291,14 @@ namespace App
         }
     }
 
-    void renderWindowContext(int preset)
+    void renderWindowContext()
     {
+        // # TODO add logic to get Process id from name process
+        // # TODO Update Acitve process list
+        // # Do Timer logic
+        // # connect buttons to the logic to start process
+
+
         static int statusFlag;
 
         ImGui::SeparatorText("Block Now");
@@ -299,16 +368,30 @@ namespace App
 
         ImGui::Spacing();
 
-        ImGui::SeparatorText("Processes");
-        setTable(totalProcessList, preset);
+        if (ImGui::CollapsingHeader("Processes"))
+        {
+            setTable();
+        }
+        
     }
         
-    void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList, int set)
+    void setTable()
     {
         HelpMarker("Below is a list of active processes that can be designate to kill, the 'Browse' allows manual addition.");
         ImGui::SameLine();
         ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_S, flags | ImGuiInputFlags_Tooltip);
         
+        static std::wstring item_selected_idx = L""; // Here we store our selected data as an index.
+        static bool item_highlight = false;
+        std::wstring  item_highlighted_idx = L""; // Here we store our highlighted data as an index.
+
+        static std::wstring item_selected_idx2 = L""; // Here we store our selected data as an index.
+        static bool item_highlight2 = false;
+        std::wstring  item_highlighted_idx2 = L""; // Here we store our highlighted data as an index.
+
+        const size_t bufferSize = 50;
+        char cstr[bufferSize];
+
         if (ImGui::Button("Browse"))
         {
             NFD_Init();
@@ -325,9 +408,10 @@ namespace App
                 puts("Success!");
                 puts(outPath);
                 std::wstring cutName = sliceName(outPath);
-                if (std::find(presets[set].blackList.begin(), presets[set].blackList.end(), cutName) == presets[set].blackList.end())
+                
+                if (auto search = blackList.find(cutName); search == blackList.end())
                 {
-                    presets[set].blackList.emplace_back(cutName);
+                    blackList[cutName];
                 }
                 
                 NFD_FreePathU8(outPath); // Free Mem
@@ -347,17 +431,24 @@ namespace App
         
         ImGui::SameLine();
 
-        // #TODO add logic to pass back to each other
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 130.0f);
-        if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {}
+        if (ImGui::ArrowButton("##left", ImGuiDir_Left))
+        {
+            blackList.erase(item_selected_idx2);
+        }
         ImGui::SameLine(0.0f, 5.0f);
-        if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {}
+        if (ImGui::ArrowButton("##right", ImGuiDir_Right)) 
+        {
+            if (item_selected_idx != L"")
+            {
+                if (auto search = blackList.find(item_selected_idx); search == blackList.end())
+                {
+                    blackList[item_selected_idx] = totalProcessList[item_selected_idx];
+                }
+            }
+        }
 
-        ImGui::Spacing();
-
-        static std::wstring item_selected_idx = L""; // Here we store our selected data as an index.
-        static bool item_highlight = false;
-        std::wstring  item_highlighted_idx = L""; // Here we store our highlighted data as an index.
+        ImGui::Spacing();      
 
         if (ImGui::BeginTable("Parent_Table", 2, parentFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
         {
@@ -366,15 +457,10 @@ namespace App
             ImGui::TableHeadersRow();
             ImGui::TableNextColumn();
 
-            // #TODO
-            // Update this in intervals to not bog down the system
-            // Also look into deffering it with a thread to update and check if a update to main list is needed
             if (ImGui::BeginTable("table1", 1, tableFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
                 for (const auto& [key, value] : totalProcessList)
                 {
-                    const size_t bufferSize = 50;
-                    char cstr[bufferSize];
                     convertWStringToCString(key, cstr, bufferSize);
 
                     const bool is_selected = (item_selected_idx == key);
@@ -397,18 +483,11 @@ namespace App
 
             ImGui::TableNextColumn();
 
-            static std::wstring item_selected_idx2 = L""; // Here we store our selected data as an index.
-            static bool item_highlight2 = false;
-            std::wstring  item_highlighted_idx2 = L""; // Here we store our highlighted data as an index.
-
-            // #TODO
-            // This table will only get updated if a new item is added and when loaded
             if (ImGui::BeginTable("table2", 1, tableFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
-                for (const auto& key : presets[set].blackList)
+                for (const auto& [key, value] : blackList)
                 {
-                    const size_t bufferSize = 50;
-                    char cstr[bufferSize];
+
                     convertWStringToCString(key, cstr, bufferSize);
 
                     const bool is_selected2 = (item_selected_idx2 == key);

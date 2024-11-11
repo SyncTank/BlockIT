@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <locale>
+#include <codecvt>
 
 #include <psapi.h>
 #include <tchar.h>
