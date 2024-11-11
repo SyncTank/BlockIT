@@ -24,6 +24,10 @@ namespace App
 
     std::unordered_map<std::wstring, std::vector<DWORD>> blackList;
 
+    static std::string globalTimer = "00:00:00:00";
+    static std::string currentTime = "00:00:00:00";
+    static std::string expectedTime= "00:00:00:00";
+
     dataBuffer presets[5];
     static bool isRunning = false;
 
@@ -304,6 +308,10 @@ namespace App
         ImGui::SeparatorText("Block Now");
         ImGui::Spacing();
         {
+            ImGui::Text("Timer : ");
+            ImGui::SameLine();
+            ImGui::Text(globalTimer.c_str());
+
             HelpMarker("This Countdown Timer Set in Minutes.");
             ImGui::SameLine();
             ImGui::PushItemWidth(75);

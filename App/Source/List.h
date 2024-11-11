@@ -28,6 +28,14 @@ namespace App
 		int item_current_2 = 0;
 	};
 
+	struct Timer
+	{
+		int secs = 0;
+		int min = 0;
+		int hours = 0;
+		int days = 0;
+	};
+
 	void init();
 
 	bool folderSetup();
