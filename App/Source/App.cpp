@@ -158,6 +158,7 @@ int main(int argc, char** argv)
 
     const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
+    static int setState = 0; // Defaults to 0/first set
 
     App::init(); // setup function - preloads stuff
 
@@ -191,7 +192,7 @@ int main(int argc, char** argv)
         ImGui::NewFrame();
 
         #pragma region UI Components
-
+                
         if (show_window)
         {
             // Main body
@@ -217,11 +218,11 @@ int main(int argc, char** argv)
 
                 if (ImGui::Button("Save"))
                 {
-                    App::writeAppFileOut();
+                    App::writeAppFileOut(setState);
                 }
                 if (ImGui::Button("Load"))
                 {
-                    App::folderSetup();
+                    App::loadSet(setState);
                 }
 
                 ImGui::PopStyleColor(3);
@@ -242,27 +243,32 @@ int main(int argc, char** argv)
             {
                 if (ImGui::BeginTabItem("Set 1"))
                 {
-                    App::renderWindowContext(0);
+                    setState = 0;
+                    App::renderWindowContext(setState);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 2"))
                 {
-                    App::renderWindowContext(1);
+                    setState = 1;
+                    App::renderWindowContext(setState);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 3"))
                 {
-                    App::renderWindowContext(2);
+                    setState = 2;
+                    App::renderWindowContext(setState);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 4"))
                 {
-                    App::renderWindowContext(3);
+                    setState = 3;
+                    App::renderWindowContext(setState);
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Set 5"))
                 {
-                    App::renderWindowContext(4);
+                    setState = 4;
+                    App::renderWindowContext(setState);
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();

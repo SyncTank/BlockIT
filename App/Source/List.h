@@ -3,6 +3,8 @@
 #include "Core/Core.h"
 #include "imgui.h"
 #include <nfd.h>
+#include <cstdlib>
+#include <sstream>
 
 #ifdef _WIN32
 #include <direct.h>   // For _mkdir on Windows
@@ -12,34 +14,31 @@
 #define MKDIR(path) mkdir(path, 0777)
 #endif
 
-
-//#include "simdjson.h"
-
 namespace App
 {
-	struct databuffers {
-		static char str1[];
-		static char str2[];
-		static char str3[];
-		static char str4[];
+	struct dataBuffer
+	{
+		char str1[9] = "";
+		char str2[9] = "";
+		char str3[16] = "";
+		char str4[9] = "";
 
-		static int item_current_2;
+		std::vector<std::wstring> blackList;
+
+		int item_current_2 = 0;
 	};
 
 	void init();
 
 	bool folderSetup();
 
-	void writeAppFileOut();
+	void loadSet(int);
+
+	void writeAppFileOut(int);
 
 	void readAppFileIn(const char*);
 
 	std::wstring sliceName(const char*);
-
-	// https://github.com/simdjson/simdjson
-	//void saveData(const std::string& filename, const simdjson::dom::element& jsonData); 
-	
-	//simdjson::dom::element loadData(const std::string& filename);
 
 	std::wstring convertToWString(const char* charArray);
 
@@ -49,6 +48,6 @@ namespace App
 	
 	void renderWindowContext(int);
 
-	void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList);
+	void setTable(std::unordered_map<std::wstring, std::vector<DWORD>>&, int);
 
 }
