@@ -25,6 +25,8 @@ namespace Core {
 
 	void PrintProcessAll(DWORD);
 	
+	static void ProcessActive(std::unordered_map<std::wstring, std::vector<DWORD>>);
+
 	void ProcessList(std::unordered_map<std::wstring, std::vector<DWORD>>&);
 
 	void KillProcess(std::vector<DWORD>);

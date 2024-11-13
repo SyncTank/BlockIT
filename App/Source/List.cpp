@@ -21,26 +21,38 @@ namespace App
     static char str3[16] = "";
     static char str4[6] = "";
     static int item_current_2 = 0;
+    std::unordered_map<std::wstring, std::vector<DWORD>> blackList;
 
-    static Timer timer;
+    // Checks if the application is running
     static bool isRunning = false;
+
+    // deltaClock for running process threads
+    static float accumlatedTime;
 
     // optional flags for running
     static bool isEveryTime;
     static bool isAllDay;
     static bool isTimeSpanned;
 
-    std::unordered_map<std::wstring, std::vector<DWORD>> blackList;
+    static std::string warningFlagsText = " ";
 
+    ImGuiIO globalIO;
+
+    // Globals
+    static Timer timer;
     dataBuffer presets[5];
+    bool isThreadRunning = false;
+    std::thread firstThread;
 
     // Used for fileSaving
     std::string configPath;
     std::string filePath;
 
-    void init()
+    void init(ImGuiIO io)
     {
         Core::ProcessList(totalProcessList);
+
+        globalIO = io;
 
         if (App::folderSetup()) // Startups default to first tab
         {
@@ -110,12 +122,15 @@ namespace App
 
     void loadBuffer(int bufferData)
     {
-        strncpy_s(str1, presets[bufferData].str1, 9);
-        strncpy_s(str2, presets[bufferData].str2, 9);
-        strncpy_s(str3, presets[bufferData].str3, 16);
-        strncpy_s(str4, presets[bufferData].str4, 9);
-        item_current_2 = presets[bufferData].item_current_2;
-        blackList = presets[bufferData].list;
+        if (!isRunning)
+        {
+            strncpy_s(str1, presets[bufferData].str1, 9);
+            strncpy_s(str2, presets[bufferData].str2, 9);
+            strncpy_s(str3, presets[bufferData].str3, 16);
+            strncpy_s(str4, presets[bufferData].str4, 9);
+            item_current_2 = presets[bufferData].item_current_2;
+            blackList = presets[bufferData].list;
+        }
     }
 
     // Write out all Buffers out to filePath (Updates the saveSet data that currently in buffer)
@@ -313,22 +328,23 @@ namespace App
         return false;
     }
 
-    char* currentTime()
+    void startThreadProcess(std::unordered_map<std::wstring, std::vector<DWORD>>& process)
     {
-        std::chrono::duration<int, std::ratio<60 * 60 * 24>> one_day(1);
-        std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+        if (isThreadRunning == false)
+        {
+            firstThread = std::thread(Core::ProcessList, std::ref(process) );
+            isThreadRunning = true;
+        }
+        else if (firstThread.joinable() && isThreadRunning == true)
+        {
+            firstThread.join();
+            isThreadRunning = false;
+        }
 
-        std::time_t time = std::chrono::system_clock::to_time_t(today);
-        return ctime(&time);
     }
 
     void renderWindowContext()
     { 
-        // # TODO add logic to get Process id from name process
-        // # TODO Update Acitve process list
-        // # Do Timer logic
-        // # connect buttons to the logic to start process
-
         ImGui::SeparatorText("Block Now");
         ImGui::Spacing();
         {
@@ -385,23 +401,75 @@ namespace App
 
             if (isRunning)
             {
-                // start the killin
-            }
+                if (accumlatedTime > 200)
+                {
+                    // #TODO update blacklist here;
+                //    Core::ProcessActive(blackList);
+                //
+                //    for (const auto& [key,value] : blackList)
+                //    {
+                //        Core::KillProcess(value);
+                //    }
+
+                    accumlatedTime = 0;
+                }
+
+                //for (const auto& [key, value] : blackList)
+                //{
+                //    Core::KillProcess(value);
+                //}
+                
+                // str1 and str2 are base values
+
+                // isAllDay; - bool checked ??
+                // isTimeSpanned; - str3
+                // isEveryTime;  - str4 & item_current_2
+
+                if (isTimeSpanned)
+                {
+
+                }
+
+                if (isEveryTime)
+                {
+
+                }
+
+                if (isAllDay)
+                {
+
+                }
+            }   
 
             if (ImGui::Button("Block"))
             {
-                timer.isRunningClock = true;
-                isRunning = true;
+                if ((strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0) && is_digits(str1) || is_digits(str2))
+                {
+                    timer.isRunningClock = false;
+                    isRunning = true;
+                    warningFlagsText = " ";
+                }
+                else
+                {
+                    warningFlagsText = "Please Input a vaild values.";
+                }
             }
             
             ImGui::SameLine(); 
             if (ImGui::Button("Cancel"))
             {
-                timer.isRunningClock = false;
+                if (isRunning)
+                {
+                    warningFlagsText = "Timer has been stopped";
+                }
+                timer.isRunningClock = true;
                 isRunning = false;
             }
             
             ImGui::PopItemWidth();
+
+            ImGui::SameLine();
+            ImGui::Text(warningFlagsText.c_str());
         }
 
         ImGui::SeparatorText("When to Block");
@@ -433,6 +501,18 @@ namespace App
                 isAllDay = !isAllDay;
             }
 
+            ImGui::SameLine();
+            static std::string allDayText;
+            if (isAllDay)
+            {
+                allDayText = "All Day Active";
+            }
+            else
+            {
+                allDayText = " ";
+            }
+            ImGui::Text(allDayText.c_str());
+
             ImGui::PopItemWidth();
             ImGui::Spacing();
             ImGui::PushItemWidth(75);
@@ -458,9 +538,19 @@ namespace App
 
         ImGui::Spacing();
 
+        accumlatedTime += globalIO.DeltaTime * 100;
         if (ImGui::CollapsingHeader("Processes"))
         {
-            setTable();
+            setTable(); 
+
+            if (!isRunning)
+            {
+                if (accumlatedTime > 300) // Refresh the process list
+                {
+                    startThreadProcess(totalProcessList);
+                    accumlatedTime = 0;
+                }
+            }
         }
         
     }

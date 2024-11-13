@@ -161,7 +161,10 @@ int main(int argc, char** argv)
     static int setState = 0; // Defaults to 0/first set
     static int pastState = 0; // used to check if loading is needed
 
-    App::init(); // setup function - preloads stuff
+    App::init(io); // setup function - preloads stuff
+
+    // Clock for threads
+    static float deltaClock = 0;
 
     #pragma endregion
 
@@ -241,6 +244,15 @@ int main(int argc, char** argv)
                 static float f = 0.0f;
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
                 ImGui::Spacing();
+
+                if (deltaClock > 1000)
+                {
+                    deltaClock = 0;
+                }
+
+                deltaClock += io.DeltaTime * 100;
+                std::string temp = "Delta Clock Cycle: " + std::to_string(deltaClock);
+                ImGui::Text(+ temp.c_str());
             }
 
             // Settings for different Sets

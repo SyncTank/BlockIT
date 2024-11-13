@@ -62,7 +62,7 @@ namespace App
 		}
 	};
 
-	void init();
+	void init(ImGuiIO);
 
 	bool folderSetup();
 
@@ -81,6 +81,8 @@ namespace App
 	std::wstring stringToWstring(const std::string&);
 
 	void convertWStringToCString(const std::wstring&, char*, size_t);
+
+	void startThreadProcess(std::unordered_map<std::wstring, std::vector<DWORD>>&);
 
 	static void HelpMarker(const char*);
 

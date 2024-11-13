@@ -58,6 +58,21 @@ namespace Core {
 
 	}
 
+	static void ProcessActive(std::unordered_map<std::wstring, std::vector<DWORD>> processName)
+	{
+		// #TODO Query list of wstrings
+
+		DWORD processes[1024], cbNeeded, cProcesses;
+
+		if (!EnumProcesses(processes, sizeof(processes), &cbNeeded)) {
+			return;
+		}
+
+		cProcesses = cbNeeded / sizeof(DWORD);
+
+		
+	}
+
 	void PrintProcessAll(DWORD processID) // prints a more detailed list and file path
 	{
 		TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
