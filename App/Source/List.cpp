@@ -14,22 +14,25 @@ namespace App
     ImGuiInputFlags flags = route_type | route_options;
 
     std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
-    
-    // Used as current contextbuffer for data send off
-    static char str1[9] = "";
-    static char str2[9] = "";
+
+    // Used as current context buffer for data send off
+    static char str1[4] = "";
+    static char str2[6] = "";
     static char str3[16] = "";
-    static char str4[9] = "";
+    static char str4[6] = "";
     static int item_current_2 = 0;
+
+    static Timer timer;
+    static bool isRunning = false;
+
+    // optional flags for running
+    static bool isEveryTime;
+    static bool isAllDay;
+    static bool isTimeSpanned;
 
     std::unordered_map<std::wstring, std::vector<DWORD>> blackList;
 
-    static std::string globalTimer = "00:00:00:00";
-    static std::string currentTime = "00:00:00:00";
-    static std::string expectedTime= "00:00:00:00";
-
     dataBuffer presets[5];
-    static bool isRunning = false;
 
     // Used for fileSaving
     std::string configPath;
@@ -94,12 +97,15 @@ namespace App
 
     void clearBuffer()
     {
-        strncpy_s(str1, "", 0);
-        strncpy_s(str2, "", 0);
-        strncpy_s(str3, "", 0);
-        strncpy_s(str4, "", 0);
-        item_current_2 = 0;
-        blackList.clear();
+        if (!isRunning)
+        {
+            strncpy_s(str1, "", 0);
+            strncpy_s(str2, "", 0);
+            strncpy_s(str3, "", 0);
+            strncpy_s(str4, "", 0);
+            item_current_2 = 0;
+            blackList.clear();
+        } 
     }
 
     void loadBuffer(int bufferData)
@@ -112,7 +118,7 @@ namespace App
         blackList = presets[bufferData].list;
     }
 
-    // Write out all Buffers out to filePath (Updates the saveSet data thats currently in buffer)
+    // Write out all Buffers out to filePath (Updates the saveSet data that currently in buffer)
     void writeAppFileOut(int saveSets)
     {
         // Saving the current contextBuffer into the state's preset
@@ -295,49 +301,104 @@ namespace App
         }
     }
 
-    void renderWindowContext()
+    bool is_digits(char* str)
     {
+        for (size_t i = 0; i < strnlen_s(str, 20); i++)
+        {
+            if (isdigit(static_cast< unsigned char > (str[i])) )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    char* currentTime()
+    {
+        std::chrono::duration<int, std::ratio<60 * 60 * 24>> one_day(1);
+        std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+
+        std::time_t time = std::chrono::system_clock::to_time_t(today);
+        return ctime(&time);
+    }
+
+    void renderWindowContext()
+    { 
         // # TODO add logic to get Process id from name process
         // # TODO Update Acitve process list
         // # Do Timer logic
         // # connect buttons to the logic to start process
 
-
-        static int statusFlag;
-
         ImGui::SeparatorText("Block Now");
         ImGui::Spacing();
         {
-            ImGui::Text("Timer : ");
+            ImGui::Text("Expected Time: ");
             ImGui::SameLine();
-            ImGui::Text(globalTimer.c_str());
+
+            if (strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0)
+            {
+                if (is_digits(str1) || is_digits(str2))
+                {
+                    static int hr = 0;
+                    static int min = 0;
+                    if (is_digits(str1))
+                    {
+                        hr = std::stoi(str1);
+                    }
+                    if (is_digits(str2))
+                    {
+                        min = std::stoi(str2);
+                    }
+
+                    if (isRunning)
+                    {
+                        ImGui::Text(timer.toTime);
+                    }
+                    else
+                    {
+                        timer.updateTargetTime(hr, min);
+                        ImGui::Text(timer.toTime);
+                    }
+
+                }
+                else
+                {
+                    timer.updateCurrentTime();
+                    ImGui::Text(timer.nowTime);
+                }
+            }
+            else
+            {
+                timer.updateCurrentTime();
+                ImGui::Text(timer.nowTime);
+            }
 
             HelpMarker("This Countdown Timer Set in Minutes.");
             ImGui::SameLine();
             ImGui::PushItemWidth(75);
             
-            ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1), 0, 0, 0);
-
+            ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1));
 
             ImGui::SameLine();
             ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
             ImGui::Spacing();
 
+            if (isRunning)
+            {
+                // start the killin
+            }
+
             if (ImGui::Button("Block"))
             {
-
-            }
-            
-            ImGui::SameLine();
-            if (ImGui::Button("Pause"))
-            {
-
+                timer.isRunningClock = true;
+                isRunning = true;
             }
             
             ImGui::SameLine(); 
             if (ImGui::Button("Cancel"))
             {
-                //testLoad();
+                timer.isRunningClock = false;
+                isRunning = false;
             }
             
             ImGui::PopItemWidth();
@@ -349,15 +410,27 @@ namespace App
         {
             HelpMarker("This Countdown Timer Set in Minutes.");
             ImGui::PushItemWidth(150);
+            ImGui::SameLine();
+            ImGui::Text("Option Flags");
 
             ImGui::Text("Enter the time period within which to block these sites");
 
-            ImGui::InputTextWithHint(" ", "Example 0900-1200", str3, IM_ARRAYSIZE(str3));
+            ImGui::InputTextWithHint(" ", "Example. 0900 1200", str3, IM_ARRAYSIZE(str3));
             ImGui::SameLine();
+
+            
+            if (strnlen(str3, 16) > 0 && is_digits(str3))
+            {
+                isTimeSpanned = true;
+            }
+            else
+            {
+                isTimeSpanned = false;
+            }
 
             if (ImGui::Button("All Day"))
             {
-
+                isAllDay = !isAllDay;
             }
 
             ImGui::PopItemWidth();
@@ -369,7 +442,16 @@ namespace App
             ImGui::InputTextWithHint("Minutes in every", "Mins", str4, IM_ARRAYSIZE(str4));
             ImGui::SameLine();
 
-            ImGui::Combo("Span", &item_current_2, "Hour\0Day\0Week\0Year\0\0");
+            ImGui::Combo("|", &item_current_2, " 15 Mins\0 30 Mins\0 1 Hour \0 90 Mins\0 2 Hours\0 3 Hours\0\0");
+            
+            if (strnlen(str4, 6) > 0 && is_digits(str4))
+            {
+                isEveryTime = true;
+            }
+            else
+            {
+                isEveryTime = false;
+            }
 
             ImGui::PopItemWidth();
         }
