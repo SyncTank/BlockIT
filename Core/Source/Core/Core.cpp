@@ -58,21 +58,6 @@ namespace Core {
 
 	}
 
-	static void ProcessActive(std::unordered_map<std::wstring, std::vector<DWORD>> processName)
-	{
-		// #TODO Query list of wstrings
-
-		DWORD processes[1024], cbNeeded, cProcesses;
-
-		if (!EnumProcesses(processes, sizeof(processes), &cbNeeded)) {
-			return;
-		}
-
-		cProcesses = cbNeeded / sizeof(DWORD);
-
-		
-	}
-
 	void PrintProcessAll(DWORD processID) // prints a more detailed list and file path
 	{
 		TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
@@ -155,6 +140,33 @@ namespace Core {
 
 			totalProcessList[szProcessName].emplace_back(processID);
 		}
+	}
+
+	std::vector<DWORD> GetProcessIDs(const std::wstring& processName) {
+		std::vector<DWORD> processIDs;
+		HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (hSnapshot == INVALID_HANDLE_VALUE) {
+			return processIDs;
+		}
+
+		PROCESSENTRY32W pe32;
+		pe32.dwSize = sizeof(PROCESSENTRY32W);
+
+		if (Process32FirstW(hSnapshot, &pe32)) {
+			do {
+				if (processName == pe32.szExeFile) {
+					processIDs.push_back(pe32.th32ProcessID);
+				}
+			} while (Process32NextW(hSnapshot, &pe32));
+		}
+
+		CloseHandle(hSnapshot);
+		return processIDs;
+	}
+
+	static bool IsProcessActive(const std::wstring& processName) {
+		std::vector<DWORD> processIDs = GetProcessIDs(processName);
+		return !processIDs.empty();
 	}
 
 	void KillProcess(std::vector<DWORD> ids)

@@ -2,6 +2,8 @@
 
 #ifndef _WINDOWS_
 #include <Windows.h>
+#include <psapi.h>
+#include <tlhelp32.h>
 #endif
 
 #include <iostream>
@@ -10,7 +12,6 @@
 #include <locale>
 #include <codecvt>
 
-#include <psapi.h>
 #include <tchar.h>
 #include <vector>
 #include <unordered_map>
@@ -24,10 +25,12 @@ namespace Core {
 	void IterProcess_C(DWORD*, DWORD);
 
 	void PrintProcessAll(DWORD);
-	
-	static void ProcessActive(std::unordered_map<std::wstring, std::vector<DWORD>>);
 
 	void ProcessList(std::unordered_map<std::wstring, std::vector<DWORD>>&);
+
+	std::vector<DWORD> GetProcessIDs(const std::wstring& processName);
+
+	static bool IsProcessActive(const std::wstring& processName);
 
 	void KillProcess(std::vector<DWORD>);
 
