@@ -28,10 +28,12 @@ namespace Core {
 
 	void ProcessList(std::unordered_map<std::wstring, std::vector<DWORD>>&);
 
+	void GetProcessNames(std::vector<std::wstring>&);
+
 	std::vector<DWORD> GetProcessIDs(const std::wstring& processName);
 
 	static bool IsProcessActive(const std::wstring& processName);
 
-	void KillProcess(std::vector<DWORD>);
+	void KillProcess(std::vector<DWORD>&);
 
 }

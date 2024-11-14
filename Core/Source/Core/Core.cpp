@@ -142,6 +142,28 @@ namespace Core {
 		}
 	}
 
+	void GetProcessNames(std::vector<std::wstring>& processIDs) {
+
+		HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (hSnapshot == INVALID_HANDLE_VALUE) {
+			return;
+		}
+
+		PROCESSENTRY32W pe32{};
+		pe32.dwSize = sizeof(PROCESSENTRY32W);
+
+		if (Process32FirstW(hSnapshot, &pe32)) {
+			do {
+				if (std::find(processIDs.begin(), processIDs.end(), pe32.szExeFile) == processIDs.end())
+				{
+					processIDs.emplace_back(pe32.szExeFile);
+				}
+			} while (Process32NextW(hSnapshot, &pe32));
+		}
+
+		CloseHandle(hSnapshot);
+	}
+
 	std::vector<DWORD> GetProcessIDs(const std::wstring& processName) {
 		std::vector<DWORD> processIDs;
 		HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -149,7 +171,7 @@ namespace Core {
 			return processIDs;
 		}
 
-		PROCESSENTRY32W pe32;
+		PROCESSENTRY32W pe32{};
 		pe32.dwSize = sizeof(PROCESSENTRY32W);
 
 		if (Process32FirstW(hSnapshot, &pe32)) {
@@ -169,7 +191,7 @@ namespace Core {
 		return !processIDs.empty();
 	}
 
-	void KillProcess(std::vector<DWORD> ids)
+	void KillProcess(std::vector<DWORD>& ids)
 	{
 		for (const auto pid : ids)
 		{

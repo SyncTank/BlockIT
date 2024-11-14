@@ -13,7 +13,7 @@ namespace App
 
     ImGuiInputFlags flags = route_type | route_options;
 
-    std::unordered_map<std::wstring, std::vector<DWORD>> totalProcessList;
+    std::vector<std::wstring> totalProcessList;
 
     // Used as current context buffer for data send off
     static char str1[4] = "";
@@ -21,13 +21,13 @@ namespace App
     static char str3[16] = "";
     static char str4[6] = "";
     static int item_current_2 = 0;
-    std::unordered_map<std::wstring, std::vector<DWORD>> blackList;
+    std::vector<std::wstring> blackList;
 
     // Checks if the application is running
     static bool isRunning = false;
 
     // deltaClock for running process threads
-    static float accumlatedTime;
+    static float accumulatedTime;
 
     // optional flags for running
     static bool isEveryTime;
@@ -50,7 +50,7 @@ namespace App
 
     void init(ImGuiIO io)
     {
-        Core::ProcessList(totalProcessList);
+        Core::GetProcessNames(totalProcessList);
 
         globalIO = io;
 
@@ -129,7 +129,7 @@ namespace App
             strncpy_s(str3, presets[bufferData].str3, 16);
             strncpy_s(str4, presets[bufferData].str4, 9);
             item_current_2 = presets[bufferData].item_current_2;
-            blackList = presets[bufferData].list;
+            blackList = presets[bufferData].List;
         }
     }
 
@@ -142,7 +142,7 @@ namespace App
         strncpy_s(presets[saveSets].str3, str3, 16);
         strncpy_s(presets[saveSets].str4, str4, 9);
         presets[saveSets].item_current_2 = item_current_2;
-        presets[saveSets].list = blackList;
+        presets[saveSets].List = blackList;
 
         std::wofstream outFile(filePath);
         if (outFile.is_open()) 
@@ -156,9 +156,9 @@ namespace App
                 outFile << "str4" << ':' << presets[i].str4 << '\n';
                 outFile << "Item_current_2" << ':' << presets[i].item_current_2 << '\n';
                 outFile << "Processes" << ':';
-                for (const auto& [key, value] : presets[i].list)
+                for (const auto& names : presets[i].List)
                 {
-                    outFile << key << ',';
+                    outFile << names << ',';
                 }
                 outFile << '\n';
             }
@@ -212,7 +212,7 @@ namespace App
 
             if (testChar == ',')
             {
-                presets[presetSets].list[stringToWstring(strBuffer)];
+                presets[presetSets].List.emplace_back(stringToWstring(strBuffer));
                 strBuffer = "";
             }
 
@@ -328,11 +328,12 @@ namespace App
         return false;
     }
 
-    void startThreadProcess(std::unordered_map<std::wstring, std::vector<DWORD>>& process)
+    static void startNameThreadProcess(std::vector<std::wstring>& process)
     {
         if (isThreadRunning == false)
         {
-            firstThread = std::thread(Core::ProcessList, std::ref(process) );
+            firstThread = std::thread(Core::GetProcessNames, std::ref(process));
+            firstThread.detach();
             isThreadRunning = true;
         }
         else if (firstThread.joinable() && isThreadRunning == true)
@@ -340,7 +341,38 @@ namespace App
             firstThread.join();
             isThreadRunning = false;
         }
+    }
 
+    void getToKilling()
+    {
+        for (const auto& ps : blackList)
+        {
+            std::vector<DWORD> ids = Core::GetProcessIDs(ps);
+            Core::KillProcess(ids);
+        }
+    }
+
+    //static void startThreadProcessToKill(std::vector<std::wstring>& process)
+    //{
+    //    if (isThreadRunning == false)
+    //    {
+    //        firstThread = std::thread(Core::GetProcessNames, std::ref(process));
+    //        firstThread.detach();
+    //        isThreadRunning = true;
+    //    }
+    //    else if (firstThread.joinable() && isThreadRunning == true)
+    //    {
+    //        firstThread.join();
+    //        isThreadRunning = false;
+    //    }
+    //}
+
+    char* updateCurrentTime()
+    {
+        char* nowTime = nullptr;
+        auto now = std::chrono::system_clock::now();
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+        return nowTime = ctime(&currentTime);
     }
 
     void renderWindowContext()
@@ -399,47 +431,41 @@ namespace App
             ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
             ImGui::Spacing();
 
-            if (isRunning)
-            {
-                if (accumlatedTime > 200)
-                {
-                    // #TODO update blacklist here;
-                //    Core::ProcessActive(blackList);
-                //
-                //    for (const auto& [key,value] : blackList)
-                //    {
-                //        Core::KillProcess(value);
-                //    }
+            // Optional flags are don't active it block now is active
+            // optional flags are always active
 
-                    accumlatedTime = 0;
-                }
-
-                //for (const auto& [key, value] : blackList)
-                //{
-                //    Core::KillProcess(value);
-                //}
-                
-                // str1 and str2 are base values
+            // str1 and str2 are base values
 
                 // isAllDay; - bool checked ??
                 // isTimeSpanned; - str3
                 // isEveryTime;  - str4 & item_current_2
 
-                if (isTimeSpanned)
-                {
+            ImGui::Text(updateCurrentTime());
 
-                }
+            if (isRunning)
+            {
+                // TLDR timer is bullshit
+                //timer.checkTimeMatch(); 
+            }
 
-                if (isEveryTime)
-                {
+            if (isRunning && accumulatedTime > 200)
+            { 
+                getToKilling();
+                accumulatedTime = 0;
+            }
+            else if (isTimeSpanned)
+            {
 
-                }
+            }
+            else if (isEveryTime)
+            {
 
-                if (isAllDay)
-                {
+            }
+            else if (isAllDay)
+            {
 
-                }
-            }   
+            }
+
 
             if (ImGui::Button("Block"))
             {
@@ -451,7 +477,7 @@ namespace App
                 }
                 else
                 {
-                    warningFlagsText = "Please Input a vaild values.";
+                    warningFlagsText = "Please Input a valid values.";
                 }
             }
             
@@ -538,17 +564,17 @@ namespace App
 
         ImGui::Spacing();
 
-        accumlatedTime += globalIO.DeltaTime * 100;
+        accumulatedTime += globalIO.DeltaTime * 100;
         if (ImGui::CollapsingHeader("Processes"))
         {
             setTable(); 
 
             if (!isRunning)
             {
-                if (accumlatedTime > 300) // Refresh the process list
+                if (accumulatedTime > 300) // Refresh the process list
                 {
-                    startThreadProcess(totalProcessList);
-                    accumlatedTime = 0;
+                    startNameThreadProcess(totalProcessList);
+                    accumulatedTime = 0;
                 }
             }
         }
@@ -588,10 +614,10 @@ namespace App
                 puts("Success!");
                 puts(outPath);
                 std::wstring cutName = sliceName(outPath);
-                
-                if (auto search = blackList.find(cutName); search == blackList.end())
+
+                if (std::find(blackList.begin(), blackList.end(), cutName) == blackList.end())
                 {
-                    blackList[cutName];
+                    blackList.emplace_back(cutName);
                 }
                 
                 NFD_FreePathU8(outPath); // Free Mem
@@ -614,17 +640,14 @@ namespace App
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 130.0f);
         if (ImGui::ArrowButton("##left", ImGuiDir_Left))
         {
-            blackList.erase(item_selected_idx2);
+            std::erase(blackList, item_selected_idx2);
         }
         ImGui::SameLine(0.0f, 5.0f);
         if (ImGui::ArrowButton("##right", ImGuiDir_Right)) 
         {
             if (item_selected_idx != L"")
             {
-                if (auto search = blackList.find(item_selected_idx); search == blackList.end())
-                {
-                    blackList[item_selected_idx] = totalProcessList[item_selected_idx];
-                }
+                blackList.emplace_back(item_selected_idx);
             }
         }
 
@@ -637,21 +660,22 @@ namespace App
             ImGui::TableHeadersRow();
             ImGui::TableNextColumn();
 
+
             if (ImGui::BeginTable("table1", 1, tableFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
-                for (const auto& [key, value] : totalProcessList)
+                for (const auto& ps : totalProcessList)
                 {
-                    convertWStringToCString(key, cstr, bufferSize);
+                    convertWStringToCString(ps, cstr, bufferSize);
 
-                    const bool is_selected = (item_selected_idx == key);
+                    const bool is_selected = (item_selected_idx == ps);
 
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     if (ImGui::Selectable(cstr, is_selected, ImGuiSelectableFlags_SpanAllColumns))
-                        item_selected_idx = key;
+                        item_selected_idx = ps;
 
                     if (item_highlight && ImGui::IsItemHovered())
-                        item_highlighted_idx = key;
+                        item_highlighted_idx = ps;
 
                     // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                     if (is_selected)
@@ -665,20 +689,19 @@ namespace App
 
             if (ImGui::BeginTable("table2", 1, tableFlags, ImVec2(ImGui::GetContentRegionAvail().x, 275)))
             {
-                for (const auto& [key, value] : blackList)
+                for (const auto& name : blackList)
                 {
+                    convertWStringToCString(name, cstr, bufferSize);
 
-                    convertWStringToCString(key, cstr, bufferSize);
-
-                    const bool is_selected2 = (item_selected_idx2 == key);
+                    const bool is_selected2 = (item_selected_idx2 == name);
 
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     if (ImGui::Selectable(cstr, is_selected2, ImGuiSelectableFlags_SpanAllColumns))
-                        item_selected_idx2 = key;
+                        item_selected_idx2 = name;
 
                     if (item_highlight2 && ImGui::IsItemHovered())
-                        item_highlighted_idx2 = key;
+                        item_highlighted_idx2 = name;
 
                     if (is_selected2)
                         ImGui::SetItemDefaultFocus();
@@ -689,7 +712,7 @@ namespace App
 
             ImGui::EndTable();
         }
-        //ImGui::SameLine();
+
     }
 
 }

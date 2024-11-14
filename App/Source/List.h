@@ -27,7 +27,7 @@ namespace App
 		char str3[16] = "";
 		char str4[6] = "";
 
-		std::unordered_map<std::wstring, std::vector<DWORD>> list;
+		std::vector<std::wstring> List;
 
 		int item_current_2 = 0;
 	};
@@ -60,6 +60,22 @@ namespace App
 			std::time_t targetTime = std::chrono::system_clock::to_time_t(new_time);
 			toTime = ctime(&targetTime);
 		}
+
+		bool checkTimeMatch()
+		{
+			if (!isRunningClock)
+			{
+				auto now = std::chrono::system_clock::now();
+				std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+				char* currentStrTime = ctime(&currentTime);
+				return std::strcmp(toTime, currentStrTime) == 0;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 	};
 
 	void init(ImGuiIO);
@@ -67,6 +83,8 @@ namespace App
 	bool folderSetup();
 
 	void clearBuffer();
+
+	void getToKilling();
 
 	void loadBuffer(int);
 
@@ -82,7 +100,9 @@ namespace App
 
 	void convertWStringToCString(const std::wstring&, char*, size_t);
 
-	void startThreadProcess(std::unordered_map<std::wstring, std::vector<DWORD>>&);
+	static void startNameThreadProcess(std::vector<std::wstring>&);
+
+	static void startThreadProcessToKill(std::vector<std::wstring>& process);
 
 	static void HelpMarker(const char*);
 
