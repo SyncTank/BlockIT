@@ -102,7 +102,7 @@ namespace App
 
 	static void startNameThreadProcess(std::vector<std::wstring>&);
 
-	static void startThreadProcessToKill(std::vector<std::wstring>& process);
+	static void getToKilling();
 
 	static void HelpMarker(const char*);
 

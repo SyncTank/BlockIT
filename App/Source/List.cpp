@@ -382,44 +382,51 @@ namespace App
         {
             ImGui::Text("Expected Time: ");
             ImGui::SameLine();
+            ImGui::Text(timer.nowTime);
 
-            if (strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0)
-            {
-                if (is_digits(str1) || is_digits(str2))
-                {
-                    static int hr = 0;
-                    static int min = 0;
-                    if (is_digits(str1))
-                    {
-                        hr = std::stoi(str1);
-                    }
-                    if (is_digits(str2))
-                    {
-                        min = std::stoi(str2);
-                    }
+            Timer testTimer;
+            testTimer.updateCurrentTime();
+            ImGui::Text("New Time: ");
+            ImGui::SameLine();
+            ImGui::Text(testTimer.nowTime);
 
-                    if (isRunning)
-                    {
-                        ImGui::Text(timer.toTime);
-                    }
-                    else
-                    {
-                        timer.updateTargetTime(hr, min);
-                        ImGui::Text(timer.toTime);
-                    }
-
-                }
-                else
-                {
-                    timer.updateCurrentTime();
-                    ImGui::Text(timer.nowTime);
-                }
-            }
-            else
-            {
-                timer.updateCurrentTime();
-                ImGui::Text(timer.nowTime);
-            }
+            //if (strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0)
+            //{
+            //    if (is_digits(str1) || is_digits(str2))
+            //    {
+            //        static int hr = 0;
+            //        static int min = 0;
+            //        if (is_digits(str1))
+            //        {
+            //            hr = std::stoi(str1);
+            //        }
+            //        if (is_digits(str2))
+            //        {
+            //            min = std::stoi(str2);
+            //        }
+            //
+            //        if (isRunning)
+            //        {
+            //            ImGui::Text(timer.toTime);
+            //        }
+            //        else
+            //        {
+            //            timer.updateTargetTime(hr, min);
+            //            ImGui::Text(timer.toTime);
+            //        }
+            //
+            //    }
+            //    else
+            //    {
+            //        timer.updateCurrentTime();
+            //        ImGui::Text(timer.nowTime);
+            //    }
+            //}
+            //else
+            //{
+            //    timer.updateCurrentTime();
+            //    ImGui::Text(timer.nowTime);
+            //}
 
             HelpMarker("This Countdown Timer Set in Minutes.");
             ImGui::SameLine();
@@ -440,8 +447,6 @@ namespace App
                 // isTimeSpanned; - str3
                 // isEveryTime;  - str4 & item_current_2
 
-            ImGui::Text(updateCurrentTime());
-
             if (isRunning)
             {
                 // TLDR timer is bullshit
@@ -450,7 +455,7 @@ namespace App
 
             if (isRunning && accumulatedTime > 200)
             { 
-                getToKilling();
+                //getToKilling();
                 accumulatedTime = 0;
             }
             else if (isTimeSpanned)
@@ -578,7 +583,6 @@ namespace App
                 }
             }
         }
-        
     }
         
     void setTable()

@@ -31,7 +31,7 @@ namespace Core {
 		//	}
 		//}
 	}
-
+	
 	void IterProcess_C(DWORD* aProcesses, DWORD size) // C implementation of function runs to initialize the list
 	{
 		// get list of process identifiers
@@ -100,7 +100,7 @@ namespace Core {
 		// Release the handler to process
 		CloseHandle(hProcess);
 	}
-
+	
 	void ProcessList(std::unordered_map<std::wstring, std::vector<DWORD>>& totalProcessList)
 	{
 		std::vector<DWORD> processes(1024);
@@ -141,8 +141,9 @@ namespace Core {
 			totalProcessList[szProcessName].emplace_back(processID);
 		}
 	}
-
-	void GetProcessNames(std::vector<std::wstring>& processIDs) {
+	
+	void GetProcessNames(std::vector<std::wstring>& processIDs) 
+	{
 
 		HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 		if (hSnapshot == INVALID_HANDLE_VALUE) {
@@ -190,7 +191,7 @@ namespace Core {
 		std::vector<DWORD> processIDs = GetProcessIDs(processName);
 		return !processIDs.empty();
 	}
-
+	
 	void KillProcess(std::vector<DWORD>& ids)
 	{
 		for (const auto pid : ids)
@@ -219,5 +220,4 @@ namespace Core {
 			CloseHandle(hProcess);
 		}
 	}
-
 }
