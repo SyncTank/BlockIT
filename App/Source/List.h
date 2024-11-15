@@ -54,6 +54,19 @@ namespace App
 			}
 		}
 
+		void updateTime() {
+			if (isRunningClock) {  // Only update if running
+				std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+
+				std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+
+				std::chrono::duration<double> time_span = duration_cast<std::chrono::duration<double>>(t2 - t1);
+
+				std::cout << "It took me " << time_span.count() << " seconds.";
+				std::cout << std::endl;
+			}
+		}
+
 		void updateTargetTime(int hours, int minutes) {
 			std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 			auto new_time = now + std::chrono::hours(hours) + std::chrono::minutes(minutes);

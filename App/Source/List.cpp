@@ -380,53 +380,44 @@ namespace App
         ImGui::SeparatorText("Block Now");
         ImGui::Spacing();
         {
-            ImGui::Text("Expected Time: ");
-            ImGui::SameLine();
-            ImGui::Text(timer.nowTime);
-
-            Timer testTimer;
-            testTimer.updateCurrentTime();
-            ImGui::Text("New Time: ");
-            ImGui::SameLine();
-            ImGui::Text(testTimer.nowTime);
-
-            //if (strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0)
-            //{
-            //    if (is_digits(str1) || is_digits(str2))
-            //    {
-            //        static int hr = 0;
-            //        static int min = 0;
-            //        if (is_digits(str1))
-            //        {
-            //            hr = std::stoi(str1);
-            //        }
-            //        if (is_digits(str2))
-            //        {
-            //            min = std::stoi(str2);
-            //        }
-            //
-            //        if (isRunning)
-            //        {
-            //            ImGui::Text(timer.toTime);
-            //        }
-            //        else
-            //        {
-            //            timer.updateTargetTime(hr, min);
-            //            ImGui::Text(timer.toTime);
-            //        }
-            //
-            //    }
-            //    else
-            //    {
-            //        timer.updateCurrentTime();
-            //        ImGui::Text(timer.nowTime);
-            //    }
-            //}
-            //else
-            //{
-            //    timer.updateCurrentTime();
-            //    ImGui::Text(timer.nowTime);
-            //}
+            if (strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0)
+            {
+                if (is_digits(str1) || is_digits(str2))
+                {
+                    static int hr = 0;
+                    static int min = 0;
+                    if (is_digits(str1))
+                    {
+                        hr = std::stoi(str1);
+                    }
+                    if (is_digits(str2))
+                    {
+                        min = std::stoi(str2);
+                    }
+            
+                    if (hr != 0 || min != 0)
+                    {
+                        timer.updateTargetTime(hr, min);
+                        ImGui::Text("Set Time: ");
+                        ImGui::SameLine();
+                        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), timer.nowTime);
+                    }
+                }
+                else
+                {
+                    timer.updateCurrentTime();
+                    ImGui::Text("Expected Time: ");
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), timer.nowTime);
+                }
+            }
+            else
+            {
+                timer.updateCurrentTime();
+                ImGui::Text("Expected Time: ");
+                ImGui::SameLine();
+                ImGui::Text(timer.nowTime);
+            }
 
             HelpMarker("This Countdown Timer Set in Minutes.");
             ImGui::SameLine();
