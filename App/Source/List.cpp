@@ -25,6 +25,7 @@ namespace App
 
     // Checks if the application is running
     static bool isRunning = false;
+    static int safeGuardTimer = 100;
 
     // deltaClock for running process threads
     static float accumulatedTime;
@@ -333,7 +334,6 @@ namespace App
         if (isThreadRunning == false)
         {
             firstThread = std::thread(Core::GetProcessNames, std::ref(process));
-            firstThread.detach();
             isThreadRunning = true;
         }
         else if (firstThread.joinable() && isThreadRunning == true)
@@ -357,7 +357,6 @@ namespace App
     //    if (isThreadRunning == false)
     //    {
     //        firstThread = std::thread(Core::GetProcessNames, std::ref(process));
-    //        firstThread.detach();
     //        isThreadRunning = true;
     //    }
     //    else if (firstThread.joinable() && isThreadRunning == true)
@@ -367,20 +366,12 @@ namespace App
     //    }
     //}
 
-    char* updateCurrentTime()
-    {
-        char* nowTime = nullptr;
-        auto now = std::chrono::system_clock::now();
-        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-        return nowTime = ctime(&currentTime);
-    }
-
     void renderWindowContext()
     { 
         ImGui::SeparatorText("Block Now");
         ImGui::Spacing();
         {
-            if (strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0)
+            if ((strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0) && !isRunning)
             {
                 if (is_digits(str1) || is_digits(str2))
                 {
@@ -395,12 +386,20 @@ namespace App
                         min = std::stoi(str2);
                     }
             
-                    if (hr != 0 || min != 0)
+                    if (hr > -1 || min > -1)
                     {
+                        timer.updateCurrentTime();
                         timer.updateTargetTime(hr, min);
                         ImGui::Text("Set Time: ");
                         ImGui::SameLine();
-                        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), timer.nowTime);
+                        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), timer.toTime);
+                    }
+                    else
+                    {
+                        timer.updateCurrentTime();
+                        ImGui::Text("Expected Time: ");
+                        ImGui::SameLine();
+                        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), timer.nowTime);
                     }
                 }
                 else
@@ -411,57 +410,34 @@ namespace App
                     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), timer.nowTime);
                 }
             }
-            else
+            else if (!isRunning)
             {
                 timer.updateCurrentTime();
                 ImGui::Text("Expected Time: ");
                 ImGui::SameLine();
                 ImGui::Text(timer.nowTime);
             }
+            else
+            {
+                ImGui::Text("Set Time: ");
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), timer.toTime);
+            }
 
-            HelpMarker("This Countdown Timer Set in Minutes.");
-            ImGui::SameLine();
-            ImGui::PushItemWidth(75);
-            
-            ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1));
+            {
+                HelpMarker("This Countdown Timer Set in Minutes.");
+                ImGui::SameLine();
+                ImGui::PushItemWidth(75);
 
-            ImGui::SameLine();
-            ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
-            ImGui::Spacing();
+                ImGui::InputTextWithHint("Hour(s)", "H", str1, IM_ARRAYSIZE(str1));
+
+                ImGui::SameLine();
+                ImGui::InputTextWithHint("Minute(s)", "Mins", str2, IM_ARRAYSIZE(str2));
+                ImGui::Spacing();
+            };
 
             // Optional flags are don't active it block now is active
             // optional flags are always active
-
-            // str1 and str2 are base values
-
-                // isAllDay; - bool checked ??
-                // isTimeSpanned; - str3
-                // isEveryTime;  - str4 & item_current_2
-
-            if (isRunning)
-            {
-                // TLDR timer is bullshit
-                //timer.checkTimeMatch(); 
-            }
-
-            if (isRunning && accumulatedTime > 200)
-            { 
-                //getToKilling();
-                accumulatedTime = 0;
-            }
-            else if (isTimeSpanned)
-            {
-
-            }
-            else if (isEveryTime)
-            {
-
-            }
-            else if (isAllDay)
-            {
-
-            }
-
 
             if (ImGui::Button("Block"))
             {
@@ -470,6 +446,7 @@ namespace App
                     timer.isRunningClock = false;
                     isRunning = true;
                     warningFlagsText = " ";
+                    safeGuardTimer = 0;
                 }
                 else
                 {
@@ -486,6 +463,53 @@ namespace App
                 }
                 timer.isRunningClock = true;
                 isRunning = false;
+            }
+
+            // str1 and str2 are base values
+
+            // isAllDay; - bool checked ??
+            // isTimeSpanned; - str3
+            // isEveryTime;  - str4 & item_current_2
+
+            if (isRunning)
+            {
+                timer.updateTime();
+                timer.updateTimeLeft();
+
+                if (timer.timeLeft != 0)
+                {
+                    ImGui::SameLine();
+                    ImGui::Text("Time Left: ");
+                    ImGui::SameLine();
+                    ImGui::Text(timer.timeLeft);
+                    ImGui::SameLine();
+                    ImGui::Text("Secs");
+
+
+                    ImGui::Text(timer.nowTime);
+                    ImGui::Text(timer.toTime);
+                }
+
+                
+
+            }
+
+            if (isRunning && accumulatedTime > 200)
+            {
+                //getToKilling();
+                accumulatedTime = 0;
+            }
+            else if (isTimeSpanned)
+            {
+
+            }
+            else if (isEveryTime)
+            {
+
+            }
+            else if (isAllDay)
+            {
+
             }
             
             ImGui::PopItemWidth();
