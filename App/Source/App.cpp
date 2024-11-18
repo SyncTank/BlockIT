@@ -10,6 +10,10 @@
 #include "List.h" // includes the imgui.h
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -71,10 +75,23 @@ int main(int argc, char** argv)
     GLFWwindow* window = glfwCreateWindow(1280, 720, "BlockIT", nullptr, nullptr);
     if (window == nullptr)
         return 1;
+
     glfwMakeContextCurrent(window);
     // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
     //glfwHideWindow(window); 
+
     glfwSwapInterval(1); // Enable vsync
+    // Monitor refresh rate/interval = application FPS.
+    // Below is a list of some intervals and the effects they will have.
+    // In this example we will use my 360hz monitor as a reference point.
+
+    //    0 = inf.FPS // free.
+    //    1 = 360  FPS // ~2.7 ms/frame
+    //    2 = 180  FPS // ~5.5 ms/frame
+    //    4 = 90   FPS // ~11.12 ms/frame
+    //    6 = 60   FPS // ~16.6 ms/frame
+
+    #pragma region IO
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -111,6 +128,13 @@ int main(int argc, char** argv)
         style.SelectableTextAlign = ImVec2(.03f, 0.0f);
         style.SeparatorTextBorderSize = 1;
     }
+
+    GLFWimage image_Icons[1];
+    image_Icons[0].pixels = stbi_load("../temp_icon.png", &image_Icons[0].width, &image_Icons[0].height,0, 4);
+    glfwSetWindowIcon(window, 1, image_Icons);
+    stbi_image_free(image_Icons->pixels);
+
+    #pragma endregion
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -160,6 +184,10 @@ int main(int argc, char** argv)
     const ImGuiCond windowCondor = 0;
     static int setState = 0; // Defaults to 0/first set
     static int pastState = 0; // used to check if loading is needed
+    const int TARGET_FPS = 30;
+    const double FRAME_TIME = 1.0 / TARGET_FPS;
+    std::chrono::steady_clock::time_point startTime;
+    std::chrono::steady_clock::time_point endTime;
 
     App::init(io); // setup function - preloads stuff
 
@@ -194,6 +222,12 @@ int main(int argc, char** argv)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        
+        if (!show_window)
+        {
+            startTime = std::chrono::high_resolution_clock::now();
+        }
+        
 
         #pragma region UI Components
                 
@@ -206,7 +240,8 @@ int main(int argc, char** argv)
 
             if (ImGui::BeginMenuBar())
             {
-                if (!(App::isRunning))
+                
+                if (!App::getIsRunning())
                 {
                     if (ImGui::BeginMenu("Quit"))
                     {
@@ -218,6 +253,7 @@ int main(int argc, char** argv)
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0)); // Remove background color
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.26f, .59f, .98f, .8f));   // Remove hover color
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.26f, .59f, .98f, 1.0f));   // Remove active color
+                
                 if (ImGui::Button("Minimize"))
                 {
                     glfwIconifyWindow(window);
@@ -329,7 +365,24 @@ int main(int argc, char** argv)
             return 0;
         }
 
+        
+
         #pragma endregion
+
+
+        if (!show_window)
+        {
+            // Calculate frame duration
+            endTime = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = endTime - startTime;
+
+            // Sleep to maintain the target frame rate
+            if (io.Framerate > TARGET_FPS) {
+                std::this_thread::sleep_for(std::chrono::duration<double>(FRAME_TIME - elapsed.count()));
+            }
+        }
+
+        
 
         // Rendering
         ImGui::Render();

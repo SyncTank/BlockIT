@@ -20,8 +20,6 @@
 
 namespace App
 {
-	static bool isRunning = false;
-
 	struct dataBuffer
 	{
 		char str1[4] = "";
@@ -60,6 +58,29 @@ namespace App
 				strcpy_s(nowTime, strlen(currentTimeStr) + 1, currentTimeStr);
 		}
 
+		void updateTargetTimeMilitary(int hours, int minutes) {
+			// Convert to time_t to manipulate the time
+			std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+
+			// Convert to tm structure
+			std::tm* now_tm = std::localtime(&now_time_t);
+
+			// Set the hour, minute, second to 0 to get 0000 hour
+			now_tm->tm_hour = hours;
+			now_tm->tm_min = minutes;
+
+			// Convert back to time_t
+			std::time_t new_time_t = std::mktime(now_tm);
+
+			// Convert back to chrono time_point
+			auto zerod = std::chrono::system_clock::from_time_t(new_time_t);
+			auto n_time = std::chrono::system_clock::to_time_t(zerod);
+			const char* targetTimeStr = ctime(&n_time);
+
+			toTime = new char[strlen(targetTimeStr) + 1];
+			strcpy_s(toTime, strlen(targetTimeStr) + 1, targetTimeStr);
+		}
+
 		void updateTargetTime(int hours, int minutes) {
 			new_Time = now + std::chrono::hours(hours) + std::chrono::minutes(minutes);
 			std::time_t targetTime = std::chrono::system_clock::to_time_t(new_Time);
@@ -67,6 +88,29 @@ namespace App
 
 			toTime = new char[strlen(targetTimeStr) + 1];
 			strcpy_s(toTime, strlen(targetTimeStr) + 1, targetTimeStr);
+		}
+
+		void updateStartTimeMilitary(int hours, int minutes) {
+			// Convert to time_t to manipulate the time
+			std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+
+			// Convert to tm structure
+			std::tm* now_tm = std::localtime(&now_time_t);
+
+			// Set the hour, minute, second to 0 to get 0000 hour
+			now_tm->tm_hour = hours;
+			now_tm->tm_min = minutes;
+
+			// Convert back to time_t
+			std::time_t new_time_t = std::mktime(now_tm);
+
+			// Convert back to chrono time_point
+			auto zerod = std::chrono::system_clock::from_time_t(new_time_t);
+			auto n_time = std::chrono::system_clock::to_time_t(zerod);
+			const char* targetTimeStr = ctime(&n_time);
+
+			timeStart = new char[strlen(targetTimeStr) + 1];
+			strcpy_s(timeStart, strlen(targetTimeStr) + 1, targetTimeStr);
 		}
 
 		void updateStartTime(int hours, int minutes) {
@@ -87,6 +131,45 @@ namespace App
 			return false;
 		}
 
+		bool isVaildTime(int hr, int min) 
+		{
+			// Convert to time_t to manipulate the time
+			std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+
+			// Convert to tm structure
+			std::tm* now_tm = std::localtime(&now_time_t);
+
+			// Set the hour, minute, second to 0 to get 0000 hour
+			now_tm->tm_hour = hr;
+			now_tm->tm_min = min;
+
+			// Convert back to time_t
+			std::time_t new_time_t = std::mktime(now_tm);
+
+			// Convert back to chrono time_point
+			auto zerod = std::chrono::system_clock::from_time_t(new_time_t);
+			auto n_time = std::chrono::system_clock::to_time_t(zerod);
+
+			auto duration_since_epoch = zerod.time_since_epoch();
+			auto seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(duration_since_epoch).count();
+
+			auto now_since = now.time_since_epoch();
+			auto seconds_now_epoch = std::chrono::duration_cast<std::chrono::seconds>(now_since).count();
+			//const char* testTime = ctime(&say);
+
+			/*	Test Cases
+				1711 1833
+				1711 1833 2100 2300
+				0300 1100 1711 2100
+			*/
+
+			if (seconds_since_epoch < seconds_now_epoch)//1731938411  1731956380 
+			{
+				return false;
+			}
+			return true;
+		}
+
 		void updateTimeLeft() 
 		{
 			elapsed_timeLeft = new_Time - now;
@@ -99,6 +182,8 @@ namespace App
 	};
 
 	void init(ImGuiIO);
+
+	bool getIsRunning();
 
 	bool folderSetup();
 

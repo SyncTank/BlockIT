@@ -29,17 +29,20 @@ namespace App
     static int min = 0;
 
     // Checks if the application is running
-    //static bool isRunning = false;
+    static bool isRunning = false;
     static int safeGuardTimer = 100;
 
     // deltaClock for running process threads
     static float accumulatedTimeThreads;
-    static float accumulatedTimeOptionals;
 
     // optional flags for running
     static bool isEveryTime;
     static bool isAllDay;
+
     static bool isTimeSpanned;
+    std::vector<std::string> timeSpans;
+    std::vector<std::string> vaildTimes;
+    static bool isWaiting = false;
 
     static std::string warningFlagsText = " ";
 
@@ -69,6 +72,11 @@ namespace App
 
         // Load in the reference fields for the first tab into the buffer
         loadBuffer(0);
+    }
+
+    bool getIsRunning()
+    {
+        return isRunning;
     }
 
     // checks if directory exists if not make it, sets file path and inital data map
@@ -528,11 +536,24 @@ namespace App
             // optional flags are always active
             else if (isTimeSpanned && !isRunning)
             {
-                if (timer.compareStartTime())
+                if (!isWaiting)
                 {
-                    // here goes time diff
-                    timer.updateTargetTime(0, 0);
-                    isRunning = true;
+                    timer.updateStartTimeMilitary(std::stoi(vaildTimes[0].substr(0, 2)), std::stoi(vaildTimes[0].substr(2, 4)));
+                    vaildTimes.erase(vaildTimes.begin());
+                    isWaiting = true;
+                }
+                if (isWaiting)
+                {
+                    if (timer.compareStartTime())
+                    {
+                        timer.updateTargetTimeMilitary(std::stoi(vaildTimes[0].substr(0, 2)), std::stoi(vaildTimes[0].substr(2, 4)));
+                        vaildTimes.erase(vaildTimes.begin());
+                        isWaiting = false;
+                        isRunning = true;
+                    }
+                }
+                if (vaildTimes.size() == 0)
+                {
                     isTimeSpanned = false;
                 }
             }
@@ -569,34 +590,61 @@ namespace App
             ImGui::Text("Enter the time period within which to block these sites");
 
             ImGui::InputTextWithHint(" ", "Example. 0900 1200", str3, IM_ARRAYSIZE(str3));
-            ImGui::SameLine();
 
             ImGui::SameLine();
             if (ImGui::Button("Ok"))
             {
                 if (strnlen(str3, 19) > 0 && is_digits_Withspace(str3) && isTimeSpanned != true)
                 {
-                    std::string timeSpans[4];
                     std::string timeSplits;
-                    static int spaceCounter; //0900 1200 1300 1500 3 spaces 2counts
-                    for (size_t i = 0; i < strnlen(str3, 19); i++)
+                    for (size_t i = 0; i <= strnlen(str3, 19); i++)
                     {
                         if (str3[i] == ' ') 
                         {
-                            timeSpans->append(timeSplits);
+                            timeSpans.emplace_back(timeSplits);
                             timeSplits = "";
-                            spaceCounter++;
                         }
-                        else if (true)
+                        else if (str3[i] == '\0')
+                        {
+                            timeSpans.emplace_back(timeSplits);
+                            timeSplits = "";
+                        }
+                        else
                         {
                             timeSplits += str3[i];
                         }
                     }
-                    isTimeSpanned = true;
+
+                    for (size_t i = 0; i < timeSpans.size(); i+=2)
+                    {
+                        std::string timeref = timeSpans[i];
+                        auto checkVaild = timer.isVaildTime(std::stoi(timeref.substr(0,2)), std::stoi(timeref.substr(2, 4)));
+                        
+                        if (checkVaild)
+                        {
+                            vaildTimes.emplace_back(timeSpans[i]);
+                            vaildTimes.emplace_back(timeSpans[i+1]);
+                        }
+
+                    }
+                    if (vaildTimes.size() > 0)
+                    {
+                        safeGuardTimer = 0;
+                        isTimeSpanned = true;
+                    }
                 }
             }
 
-            ImGui::SameLine();
+            if (isTimeSpanned)
+            {
+                ImGui::SameLine();
+                ImGui::Text("Time Span Active");
+            }
+            else
+            {
+                ImGui::SameLine();
+                ImGui::Text(" ");
+            }
 
             if (ImGui::Button("All Day"))
             {
@@ -607,7 +655,7 @@ namespace App
             static std::string allDayText;
             if (isAllDay)
             {
-                allDayText = "All Day Active";
+                allDayText = "Active";
             }
             else
             {
@@ -626,7 +674,16 @@ namespace App
 
             ImGui::Combo("|", &item_current_2, " 15 Mins\0 30 Mins\0 1 Hour \0 90 Mins\0 2 Hours\0 3 Hours\0\0");
             ImGui::SameLine();
-            ImGui::Text(" " ? " " : "fd");
+
+            static std::string spanText;
+            if (isEveryTime)
+            {
+                spanText = "Active";
+            }
+            else
+            {
+                spanText = " ";
+            }
 
             if ((strnlen(str4, 6) > 0 && is_digits(str4)) && isEveryTime != true)
             {         
