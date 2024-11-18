@@ -18,17 +18,23 @@ namespace App
     // Used as current context buffer for data send off
     static char str1[4] = "";
     static char str2[6] = "";
-    static char str3[16] = "";
+    static char str3[20] = "";
     static char str4[6] = "";
+    //&item_current_2, " 15 Mins\0 30 Mins\0 1 Hour \0 90 Mins\0 2 Hours\0 3 Hours
+    const int items[6] = { 15, 30, 60, 90, 120, 180 }; // hours are converted to mins
     static int item_current_2 = 0;
     std::vector<std::wstring> blackList;
 
+    static int hr = 0;
+    static int min = 0;
+
     // Checks if the application is running
-    static bool isRunning = false;
+    //static bool isRunning = false;
     static int safeGuardTimer = 100;
 
     // deltaClock for running process threads
-    static float accumulatedTime;
+    static float accumulatedTimeThreads;
+    static float accumulatedTimeOptionals;
 
     // optional flags for running
     static bool isEveryTime;
@@ -319,14 +325,44 @@ namespace App
 
     bool is_digits(char* str)
     {
+        bool isdig = false;
         for (size_t i = 0; i < strnlen_s(str, 20); i++)
         {
-            if (isdigit(static_cast< unsigned char > (str[i])) )
+            if (!isdigit(static_cast< unsigned char > (str[i])) )
             {
-                return true;
+                return false;
+            }
+            else if (str[i] == '.')
+            {
+                return false;
+            }
+            else 
+            {
+                isdig = true;
             }
         }
-        return false;
+        return isdig;
+    }
+
+    bool is_digits_Withspace(char* str)
+    {
+        bool isdig = false;
+        for (size_t i = 0; i < strnlen_s(str, 20); i++)
+        {
+            if (!isdigit(static_cast<unsigned char> (str[i])) && str[i] != ' ')
+            {
+                return false;
+            }
+            else if (str[i] == '.')
+            {
+                return false;
+            }
+            else
+            {
+                isdig = true;
+            }
+        }
+        return isdig;
     }
 
     static void startNameThreadProcess(std::vector<std::wstring>& process)
@@ -375,8 +411,6 @@ namespace App
             {
                 if (is_digits(str1) || is_digits(str2))
                 {
-                    static int hr = 0;
-                    static int min = 0;
                     if (is_digits(str1))
                     {
                         hr = std::stoi(str1);
@@ -436,14 +470,10 @@ namespace App
                 ImGui::Spacing();
             };
 
-            // Optional flags are don't active it block now is active
-            // optional flags are always active
-
             if (ImGui::Button("Block"))
             {
                 if ((strnlen(str1, 4) > 0 || strnlen(str2, 6) > 0) && is_digits(str1) || is_digits(str2))
                 {
-                    timer.isRunningClock = false;
                     isRunning = true;
                     warningFlagsText = " ";
                     safeGuardTimer = 0;
@@ -461,22 +491,17 @@ namespace App
                 {
                     warningFlagsText = "Timer has been stopped";
                 }
-                timer.isRunningClock = true;
                 isRunning = false;
             }
 
-            // str1 and str2 are base values
-
-            // isAllDay; - bool checked ??
-            // isTimeSpanned; - str3
-            // isEveryTime;  - str4 & item_current_2
+            accumulatedTimeThreads += globalIO.DeltaTime * 100;
 
             if (isRunning)
             {
-                timer.updateTime();
+                timer.updateCurrentTime();
                 timer.updateTimeLeft();
 
-                if (timer.timeLeft != 0)
+                if (timer.elapsed_timeLeft.count() > 0.0)
                 {
                     ImGui::SameLine();
                     ImGui::Text("Time Left: ");
@@ -485,31 +510,45 @@ namespace App
                     ImGui::SameLine();
                     ImGui::Text("Secs");
 
-
                     ImGui::Text(timer.nowTime);
                     ImGui::Text(timer.toTime);
+
                 }
-
-                
-
+                else 
+                {
+                    isRunning = false;
+                }
+                if (accumulatedTimeThreads > 200)
+                {
+                    //getToKilling();
+                    accumulatedTimeThreads = 0;
+                }
             }
-
-            if (isRunning && accumulatedTime > 200)
+            // Optional flags don't active it if block now is active
+            // optional flags are always active
+            else if (isTimeSpanned && !isRunning)
             {
-                //getToKilling();
-                accumulatedTime = 0;
+                if (timer.compareStartTime())
+                {
+                    // here goes time diff
+                    timer.updateTargetTime(0, 0);
+                    isRunning = true;
+                    isTimeSpanned = false;
+                }
             }
-            else if (isTimeSpanned)
+            else if (isEveryTime && !isRunning)
             {
-
+                if (timer.compareStartTime())
+                {
+                    timer.updateTargetTime(0, std::stoi(str4));
+                    isRunning = true;
+                    isEveryTime = false;
+                }
             }
-            else if (isEveryTime)
+            else if (isAllDay && !isRunning)
             {
-
-            }
-            else if (isAllDay)
-            {
-
+                timer.updateTargetTime(24, 0);
+                isRunning = true;
             }
             
             ImGui::PopItemWidth();
@@ -532,15 +571,32 @@ namespace App
             ImGui::InputTextWithHint(" ", "Example. 0900 1200", str3, IM_ARRAYSIZE(str3));
             ImGui::SameLine();
 
-            
-            if (strnlen(str3, 16) > 0 && is_digits(str3))
+            ImGui::SameLine();
+            if (ImGui::Button("Ok"))
             {
-                isTimeSpanned = true;
+                if (strnlen(str3, 19) > 0 && is_digits_Withspace(str3) && isTimeSpanned != true)
+                {
+                    std::string timeSpans[4];
+                    std::string timeSplits;
+                    static int spaceCounter; //0900 1200 1300 1500 3 spaces 2counts
+                    for (size_t i = 0; i < strnlen(str3, 19); i++)
+                    {
+                        if (str3[i] == ' ') 
+                        {
+                            timeSpans->append(timeSplits);
+                            timeSplits = "";
+                            spaceCounter++;
+                        }
+                        else if (true)
+                        {
+                            timeSplits += str3[i];
+                        }
+                    }
+                    isTimeSpanned = true;
+                }
             }
-            else
-            {
-                isTimeSpanned = false;
-            }
+
+            ImGui::SameLine();
 
             if (ImGui::Button("All Day"))
             {
@@ -569,14 +625,14 @@ namespace App
             ImGui::SameLine();
 
             ImGui::Combo("|", &item_current_2, " 15 Mins\0 30 Mins\0 1 Hour \0 90 Mins\0 2 Hours\0 3 Hours\0\0");
-            
-            if (strnlen(str4, 6) > 0 && is_digits(str4))
-            {
+            ImGui::SameLine();
+            ImGui::Text(" " ? " " : "fd");
+
+            if ((strnlen(str4, 6) > 0 && is_digits(str4)) && isEveryTime != true)
+            {         
+                timer.updateStartTime(0, items[item_current_2]);
                 isEveryTime = true;
-            }
-            else
-            {
-                isEveryTime = false;
+
             }
 
             ImGui::PopItemWidth();
@@ -584,17 +640,17 @@ namespace App
 
         ImGui::Spacing();
 
-        accumulatedTime += globalIO.DeltaTime * 100;
+        
         if (ImGui::CollapsingHeader("Processes"))
         {
             setTable(); 
 
             if (!isRunning)
             {
-                if (accumulatedTime > 300) // Refresh the process list
+                if (accumulatedTimeThreads > 300) // Refresh the process list
                 {
                     startNameThreadProcess(totalProcessList);
-                    accumulatedTime = 0;
+                    accumulatedTimeThreads = 0;
                 }
             }
         }

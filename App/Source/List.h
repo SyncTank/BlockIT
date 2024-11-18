@@ -20,6 +20,8 @@
 
 namespace App
 {
+	static bool isRunning = false;
+
 	struct dataBuffer
 	{
 		char str1[4] = "";
@@ -37,32 +39,18 @@ namespace App
 		char* nowTime = nullptr;
 		char* toTime = nullptr;
 		char* timeLeft = nullptr;
-		bool isRunningClock;
+		char* timeStart = nullptr;
+		std::chrono::duration<double> elapsed_timeLeft;
 		std::chrono::system_clock::time_point now;
 		std::chrono::system_clock::time_point new_Time;
 
 		Timer() 
 		{
-			isRunningClock = true;
 			updateCurrentTime();
 			updateTargetTime(0, 0);
 		}
 
-		// #TODO either remove or rework the method calls
-		// fixed issue so timers are now functional apart from each other
-		void updateCurrentTime() { 
-			if (isRunningClock) {  // Only update if running
-				now = std::chrono::system_clock::now();
-				std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-				const char* currentTimeStr = ctime(&currentTime);
-
-				// Allocate memory for nowTime and copy the string
-				nowTime = new char[strlen(currentTimeStr) + 1];
-				strcpy_s(nowTime, strlen(currentTimeStr) + 1, currentTimeStr);
-			}
-		}
-
-		void updateTime() { // dup for test
+		void updateCurrentTime() { // dup for test
 				now = std::chrono::system_clock::now();
 				std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
 				const char* currentTimeStr = ctime(&currentTime);
@@ -81,14 +69,31 @@ namespace App
 			strcpy_s(toTime, strlen(targetTimeStr) + 1, targetTimeStr);
 		}
 
+		void updateStartTime(int hours, int minutes) {
+			new_Time = now + std::chrono::hours(hours) + std::chrono::minutes(minutes);
+			std::time_t targetTime = std::chrono::system_clock::to_time_t(new_Time);
+			const char* targetTimeStr = ctime(&targetTime);
+
+			timeStart = new char[strlen(targetTimeStr) + 1];
+			strcpy_s(timeStart, strlen(targetTimeStr) + 1, targetTimeStr);
+		}
+
+		bool compareStartTime()
+		{
+			if (std::strcmp(nowTime, timeStart) == 0)
+			{
+				return true;
+			}
+			return false;
+		}
+
 		void updateTimeLeft() 
 		{
-			auto x = new_Time - now;
-			std::chrono::duration<double> elapsed_seconds = new_Time - now;
-			std::string elasped_str = std::to_string(elapsed_seconds.count());
+			elapsed_timeLeft = new_Time - now;
+			std::string elapsed_str = std::to_string(elapsed_timeLeft.count());
 
-			timeLeft = new char[elasped_str.length() + 1];
-			strcpy_s(timeLeft, elasped_str.length() + 1, elasped_str.c_str());
+			timeLeft = new char[elapsed_str.length() + 1];
+			strcpy_s(timeLeft, elapsed_str.length() + 1, elapsed_str.c_str());
 		}
 
 	};

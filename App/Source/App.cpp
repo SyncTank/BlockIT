@@ -206,10 +206,13 @@ int main(int argc, char** argv)
 
             if (ImGui::BeginMenuBar())
             {
-                if (ImGui::BeginMenu("Quit"))
+                if (!(App::isRunning))
                 {
-                    show_window = false;
-                    ImGui::EndMenu();
+                    if (ImGui::BeginMenu("Quit"))
+                    {
+                        show_window = false;
+                        ImGui::EndMenu();
+                    }
                 }
 
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0)); // Remove background color
