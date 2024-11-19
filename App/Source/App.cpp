@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 
     glfwMakeContextCurrent(window);
     // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
-    glfwHideWindow(window); 
+    //glfwHideWindow(window); 
 
     glfwSwapInterval(1); // Enable vsync
     // Monitor refresh rate/interval = application FPS.
