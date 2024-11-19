@@ -1,11 +1,8 @@
-// Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
+/*
+    -   Rudy | syncedtank@gmail.com
+    -   release : v1.0.0
+*/
 
-// Learn about Dear ImGui:
-// - FAQ                  https://dearimgui.com/faq
-// - Getting Started      https://dearimgui.com/getting-started
-// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
-// - Introduction, links and more at the top of imgui.cpp
 
 #include "List.h" // includes the imgui.h
 #include "imgui_impl_glfw.h"
@@ -78,7 +75,7 @@ int main(int argc, char** argv)
 
     glfwMakeContextCurrent(window);
     // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
-    //glfwHideWindow(window); 
+    glfwHideWindow(window); 
 
     glfwSwapInterval(1); // Enable vsync
     // Monitor refresh rate/interval = application FPS.
@@ -99,7 +96,7 @@ int main(int argc, char** argv)
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
     io.IniFilename = nullptr;
     //io.ConfigViewportsNoAutoMerge = true;
@@ -163,9 +160,9 @@ int main(int argc, char** argv)
     #pragma region windowFlags
 
     // Our flags for the Window Context
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_window = true;
-    bool show_debug_frame = true;
+    bool show_debug_frame = false;
     bool no_scroll = true;
     bool no_resize = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
