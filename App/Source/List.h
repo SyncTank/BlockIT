@@ -74,6 +74,7 @@ namespace App
 			// Set the hour, minute, second to 0 to get 0000 hour
 			now_tm.tm_hour = hours;
 			now_tm.tm_min = minutes;
+			now_tm.tm_sec = 0;
 
 			// Convert back to time_t
 			std::time_t new_time_t = std::mktime(&now_tm);
@@ -81,6 +82,9 @@ namespace App
 			// Convert back to chrono time_point
 			auto zerod = std::chrono::system_clock::from_time_t(new_time_t);
 			auto n_time = std::chrono::system_clock::to_time_t(zerod);
+
+			new_Time = zerod;
+
 			// Buffer to hold the formatted time string
 			char buffer[30];
 			ctime_s(buffer, sizeof(buffer), &n_time);
@@ -113,6 +117,7 @@ namespace App
 			// Set the hour, minute, second to 0 to get 0000 hour
 			now_tm.tm_hour = hours;
 			now_tm.tm_min = minutes;
+			now_tm.tm_sec = 0;
 
 			// Convert back to time_t
 			std::time_t new_time_t = std::mktime(&now_tm);
