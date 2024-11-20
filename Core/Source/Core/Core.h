@@ -9,8 +9,6 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
-#include <locale>
-#include <codecvt>
 
 #include <tchar.h>
 #include <vector>

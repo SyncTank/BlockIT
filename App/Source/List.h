@@ -51,78 +51,93 @@ namespace App
 		void updateCurrentTime() { // dup for test
 				now = std::chrono::system_clock::now();
 				std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-				const char* currentTimeStr = ctime(&currentTime);
+
+				char buffer[30];
+				ctime_s(buffer, sizeof(buffer), &currentTime);
 
 				// Allocate memory for nowTime and copy the string
-				nowTime = new char[strlen(currentTimeStr) + 1];
-				strcpy_s(nowTime, strlen(currentTimeStr) + 1, currentTimeStr);
+				nowTime = new char[strlen(buffer) + 1];
+				strcpy_s(nowTime, strlen(buffer) + 1, buffer);
 		}
 
 		void updateTargetTimeMilitary(int hours, int minutes) {
 			// Convert to time_t to manipulate the time
 			std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
 
+			// Buffer to hold the tm structure
+			std::tm now_tm;
+
 			// Convert to tm structure
-			std::tm* now_tm = std::localtime(&now_time_t);
+			// Use localtime_s for safer conversion
+			localtime_s(&now_tm, &now_time_t);
 
 			// Set the hour, minute, second to 0 to get 0000 hour
-			now_tm->tm_hour = hours;
-			now_tm->tm_min = minutes;
+			now_tm.tm_hour = hours;
+			now_tm.tm_min = minutes;
 
 			// Convert back to time_t
-			std::time_t new_time_t = std::mktime(now_tm);
+			std::time_t new_time_t = std::mktime(&now_tm);
 
 			// Convert back to chrono time_point
 			auto zerod = std::chrono::system_clock::from_time_t(new_time_t);
 			auto n_time = std::chrono::system_clock::to_time_t(zerod);
-			const char* targetTimeStr = ctime(&n_time);
+			// Buffer to hold the formatted time string
+			char buffer[30];
+			ctime_s(buffer, sizeof(buffer), &n_time);
 
-			toTime = new char[strlen(targetTimeStr) + 1];
-			strcpy_s(toTime, strlen(targetTimeStr) + 1, targetTimeStr);
+			toTime = new char[strlen(buffer) + 1];
+			strcpy_s(toTime, strlen(buffer) + 1, buffer);
 		}
 
 		void updateTargetTime(int hours, int minutes) {
 			new_Time = now + std::chrono::hours(hours) + std::chrono::minutes(minutes);
 			std::time_t targetTime = std::chrono::system_clock::to_time_t(new_Time);
-			const char* targetTimeStr = ctime(&targetTime);
+			char buffer[30];
+			ctime_s(buffer, sizeof(buffer), &targetTime);
 
-			toTime = new char[strlen(targetTimeStr) + 1];
-			strcpy_s(toTime, strlen(targetTimeStr) + 1, targetTimeStr);
+			toTime = new char[strlen(buffer) + 1];
+			strcpy_s(toTime, strlen(buffer) + 1, buffer);
 		}
 
 		void updateStartTimeMilitary(int hours, int minutes) {
 			// Convert to time_t to manipulate the time
 			std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
 
+			// Buffer to hold the tm structure
+			std::tm now_tm;
+
 			// Convert to tm structure
-			std::tm* now_tm = std::localtime(&now_time_t);
+			// Use localtime_s for safer conversion
+			localtime_s(&now_tm, &now_time_t);
 
 			// Set the hour, minute, second to 0 to get 0000 hour
-			now_tm->tm_hour = hours;
-			now_tm->tm_min = minutes;
+			now_tm.tm_hour = hours;
+			now_tm.tm_min = minutes;
 
 			// Convert back to time_t
-			std::time_t new_time_t = std::mktime(now_tm);
+			std::time_t new_time_t = std::mktime(&now_tm);
 
 			// Convert back to chrono time_point
 			auto zerod = std::chrono::system_clock::from_time_t(new_time_t);
 			auto n_time = std::chrono::system_clock::to_time_t(zerod);
-			const char* targetTimeStr = ctime(&n_time);
+			char buffer[30];
+			ctime_s(buffer, sizeof(buffer), &n_time);
 
-			timeStart = new char[strlen(targetTimeStr) + 1];
-			strcpy_s(timeStart, strlen(targetTimeStr) + 1, targetTimeStr);
+			timeStart = new char[strlen(buffer) + 1];
+			strcpy_s(timeStart, strlen(buffer) + 1, buffer);
 		}
 
 		void updateStartTime(int hours, int minutes) {
 			new_Time = now + std::chrono::hours(hours) + std::chrono::minutes(minutes);
 			std::time_t targetTime = std::chrono::system_clock::to_time_t(new_Time);
-			const char* targetTimeStr = ctime(&targetTime);
+			char buffer[30];
+			ctime_s(buffer, sizeof(buffer), &targetTime);
 
-			timeStart = new char[strlen(targetTimeStr) + 1];
-			strcpy_s(timeStart, strlen(targetTimeStr) + 1, targetTimeStr);
+			timeStart = new char[strlen(buffer) + 1];
+			strcpy_s(timeStart, strlen(buffer) + 1, buffer);
 		}
 
-		bool compareStartTime()
+		bool compareStartTime() const
 		{
 			if (std::strcmp(nowTime, timeStart) == 0)
 			{
@@ -131,20 +146,24 @@ namespace App
 			return false;
 		}
 
-		bool isVaildTime(int hr, int min) 
+		bool isVaildTime(int hr, int min) const
 		{
 			// Convert to time_t to manipulate the time
 			std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
 
+			// Buffer to hold the tm structure
+			std::tm now_tm;
+
 			// Convert to tm structure
-			std::tm* now_tm = std::localtime(&now_time_t);
+			// Use localtime_s for safer conversion
+			localtime_s(&now_tm, &now_time_t);
 
 			// Set the hour, minute, second to 0 to get 0000 hour
-			now_tm->tm_hour = hr;
-			now_tm->tm_min = min;
+			now_tm.tm_hour = hr;
+			now_tm.tm_min = min;
 
 			// Convert back to time_t
-			std::time_t new_time_t = std::mktime(now_tm);
+			std::time_t new_time_t = std::mktime(&now_tm);
 
 			// Convert back to chrono time_point
 			auto zerod = std::chrono::system_clock::from_time_t(new_time_t);

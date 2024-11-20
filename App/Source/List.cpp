@@ -290,8 +290,10 @@ namespace App
 
     // Function to convert std::string to std::wstring
     std::wstring stringToWstring(const std::string& str) {
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        return converter.from_bytes(str);
+        int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+        std::wstring wstrTo(size_needed, 0);
+        MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+        return wstrTo;
     }
 
     // Name slice for filePath
@@ -352,7 +354,7 @@ namespace App
         return isdig;
     }
 
-    bool is_digits_Withspace(char* str)
+    static bool is_digits_Withspace(char* str)
     {
         bool isdig = false;
         for (size_t i = 0; i < strnlen_s(str, 20); i++)
@@ -530,7 +532,7 @@ namespace App
                 }
                 if (accumulatedTimeThreads > 200)
                 {
-                    //getToKilling();
+                    getToKilling();
                     accumulatedTimeThreads = 0;
                 }
             }
@@ -599,6 +601,8 @@ namespace App
                 if (strnlen(str3, 19) > 0 && is_digits_Withspace(str3) && isTimeSpanned != true)
                 {
                     std::string timeSplits;
+                    timeSpans.clear();
+                    vaildTimes.clear();
                     for (size_t i = 0; i <= strnlen(str3, 19); i++)
                     {
                         if (str3[i] == ' ') 
@@ -634,6 +638,10 @@ namespace App
                         safeGuardTimer = 0;
                         isTimeSpanned = true;
                     }
+                }
+                else
+                {
+                    isTimeSpanned = false;
                 }
             }
 
