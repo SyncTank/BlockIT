@@ -7,6 +7,7 @@
 #include "List.h" // includes the imgui.h
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_internal.h" // ??
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -68,19 +69,24 @@ int main(int argc, char** argv)
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
 
+    // More options to hide window context
+    //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
     // Create window with graphics context using Dear ImGui GLFW+OpenGL3 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "BlockIT", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1280, 675, "BlockIT", nullptr, nullptr);
+
     if (window == nullptr)
         return 1;
 
     glfwMakeContextCurrent(window);
     // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
-    //glfwHideWindow(window); 
+    glfwHideWindow(window); 
 
-    glfwSwapInterval(1); // Enable vsync
+    glfwSwapInterval(6); // Enable vsync
     // Monitor refresh rate/interval = application FPS.
     // Below is a list of some intervals and the effects they will have.
-    // In this example we will use my 360hz monitor as a reference point.
+    // This is tied to the evetpolling from I'm Gui so careful on modification
 
     //    0 = inf.FPS // free.
     //    1 = 360  FPS // ~2.7 ms/frame
@@ -98,8 +104,8 @@ int main(int argc, char** argv)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    io.ConfigViewportsNoAutoMerge = true;
     io.IniFilename = nullptr;
-    //io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
 
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | ImGuiTabBarFlags_TabListPopupButton;
@@ -167,6 +173,7 @@ int main(int argc, char** argv)
     bool no_resize = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool no_menu = false;
+    bool no_move = false;
     bool unsaved_document = false;
     static bool no_collapse = true;
 
@@ -176,6 +183,7 @@ int main(int argc, char** argv)
     if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
     if (no_scroll)          window_flags |= ImGuiWindowFlags_NoScrollbar;
     if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
+    if (no_move)            window_flags |= ImGuiWindowFlags_NoMove;
 
     const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
@@ -187,6 +195,10 @@ int main(int argc, char** argv)
     std::chrono::steady_clock::time_point endTime;
 
     App::init(io); // setup function - preloads stuff
+
+    // # Idea Build a starting ImGUI window with flags.
+    // Since I have window context call Iconify function in it.
+    ImGuiWindow start_window(0,"BlockIT");
 
     // Clock for threads
     static float deltaClock = 0;
@@ -208,13 +220,13 @@ int main(int argc, char** argv)
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
         // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        glfwPollEvents();
+        
         if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0)
         {
-            ImGui_ImplGlfw_Sleep(10);
+            ImGui_ImplGlfw_Sleep(5);
             continue;
         }
-
+        glfwPollEvents();
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -230,8 +242,13 @@ int main(int argc, char** argv)
                 
         if (show_window)
         {
+            ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
+            
             // Main body
             ImGui::Begin("BlockIT", 0, window_flags);
+            
+            auto wind_start = ImGui::GetWindowViewport();
+            
 
             ImGui::SetWindowSize(windowSize, windowCondor);
 
