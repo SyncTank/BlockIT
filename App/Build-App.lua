@@ -3,7 +3,7 @@ project "App"
    language "C++"
    cppdialect "C++20"
    targetdir "Binaries/%{cfg.buildcfg}"
-   staticruntime "off"
+   staticruntime "on"
 
    files { "Source/*.h", "Source/*.cpp", "Source/*.c", 
    "include/imgui/**/*.h", "include/imgui/**/*.cpp", "include/imgui/**/*.hpp",
@@ -21,17 +21,12 @@ project "App"
 		"../Core/Source"
    }
    
-   libdirs { "libs/glfw" }
+   libdirs { "libs/glfw/lib-vc2022-64" }
 
    links {
-    "glfw3dll",      -- Static GLFW library
+    "glfw3_mt",      -- Static GLFW library
     "opengl32",      -- OpenGL library (required by GLFW)
-    "gdi32",         -- Windows Graphics Device Interface
-    "user32",        -- Windows User API
-    "shell32",       -- Windows Shell API
-    "advapi32",      -- Advanced Windows API
-    "ws2_32",        -- Winsock library (network support for Windows)
-    "Core"           -- core library
+	"Core"           -- core library
 	}
 
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
@@ -39,10 +34,11 @@ project "App"
 
    filter "system:windows"
        systemversion "latest"
-       defines { "WINDOWS" }
-	   linkoptions { "/SUBSYSTEM:WINDOWS", "/VERBOSE" }
-
-
+       defines { "WINDOWS", "GLFW_STATIC" }
+	   
+       linkoptions { "/SUBSYSTEM:WINDOWS", "/VERBOSE" }
+	   
+	   
    filter "configurations:Debug"
        defines { "DEBUG" }
        runtime "Debug"
