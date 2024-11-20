@@ -126,10 +126,10 @@ int main(int argc, char** argv)
         style.SeparatorTextBorderSize = 1;
     }
 
-    GLFWimage image_Icons[1];
-    image_Icons[0].pixels = stbi_load("../temp_icon.png", &image_Icons[0].width, &image_Icons[0].height,0, 4);
-    glfwSetWindowIcon(window, 1, image_Icons);
-    stbi_image_free(image_Icons->pixels);
+    //GLFWimage image_Icons[1];
+    //image_Icons[0].pixels = stbi_load("../temp_icon.png", &image_Icons[0].width, //&image_Icons[0].height,0, 4);
+    //glfwSetWindowIcon(window, 1, image_Icons);
+    //stbi_image_free(image_Icons->pixels);
 
     #pragma endregion
 

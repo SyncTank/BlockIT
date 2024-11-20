@@ -3,6 +3,7 @@
 Binaries/
 
 # Files
+*.conan
 *.vcxproj
 *.vcxproj.user
 *.vcxproj.filters

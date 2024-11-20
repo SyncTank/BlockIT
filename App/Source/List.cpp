@@ -419,6 +419,8 @@ namespace App
             {
                 if (is_digits(str1) || is_digits(str2))
                 {
+                    hr = 0;
+                    min = 0;
                     if (is_digits(str1))
                     {
                         hr = std::stoi(str1);
@@ -690,6 +692,10 @@ namespace App
                 timer.updateStartTime(0, items[item_current_2]);
                 isEveryTime = true;
 
+            }
+            else if((strnlen(str4, 6) == 0))
+            {
+                isEveryTime = false;
             }
 
             ImGui::PopItemWidth();
