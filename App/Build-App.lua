@@ -36,8 +36,7 @@ project "App"
        systemversion "latest"
        defines { "WINDOWS", "GLFW_STATIC" }
 	   
-       linkoptions { "/SUBSYSTEM:WINDOWS", "/VERBOSE" }
-	   
+       linkoptions { "/SUBSYSTEM:WINDOWS", "/VERBOSE", "/MANIFEST:embed" }
 	   
    filter "configurations:Debug"
        defines { "DEBUG" }

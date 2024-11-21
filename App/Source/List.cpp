@@ -83,26 +83,38 @@ namespace App
     bool folderSetup() 
     {
         char* homeDir = nullptr;
-        //size_t len = 0;
-        errno_t err = _dupenv_s(&homeDir, 0, "HOME");
         
+#ifdef _WIN32
+        errno_t err = _dupenv_s(&homeDir, nullptr, "LOCALAPPDATA");
         if (err != 0 || homeDir == nullptr) {
-        #ifdef _WIN32
-            err = _dupenv_s(&homeDir, 0, "LOCALAPPDATA"); // Use LOCALAPPDATA on Windows
-        #endif
-            if (err != 0 || homeDir == nullptr) {
-                std::cerr << "HOME or LOCALAPPDATA environment variable not found." << std::endl;
+            std::cerr << "Environment variable LOCALAPPDATA is not set." << std::endl;
+            return 1;
+        }
+#else
+        homeDir = getenv("HOME");
+        if (homeDir == nullptr) {
+            std::cerr << "Environment variable HOME is not set." << std::endl;
+            return 1;
+        }
+#endif
+
+        configPath = std::string(homeDir) + PATH_SEPARATOR +"BlockIT";
+        filePath = configPath + PATH_SEPARATOR +"settings.json";
+
+        struct stat info;
+
+        if (stat(configPath.c_str(), &info) != 0) { // Directory does not exist
+#ifdef _WIN32
+            if (_mkdir(configPath.c_str()) != 0) {
+#else
+            if (mkdir(configPath.c_str(), 0755) != 0) { // 0755 is a typical permission
+#endif
+                std::cerr << "Failed to create directory: " << strerror(errno) << std::endl;
                 return 1;
             }
-        }
-
-        configPath = std::string(homeDir) + "\\BlockIT";
-        filePath = configPath + "\\settings.json";
-
-        // Create the directory if it doesn't exist
-        if (_mkdir(configPath.c_str()) && errno != EEXIST) {
-            std::cerr << "Failed to create directory: " << strerror_s(homeDir,0,errno) << std::endl;
-            free(homeDir); // Free the allocated memory
+            }
+        else if (!(info.st_mode & S_IFDIR)) {
+            std::cerr << "A file exists with the same name as the config directory." << std::endl;
             return 1;
         }
 
@@ -111,11 +123,16 @@ namespace App
         // buffer that reads settings to load up
         char inStreamBuffer[4096]; // size of struct + alignment * 5, plus addition char in writeAppFileOut 
         std::ifstream inFile(filePath);
-        if (inFile.is_open())
-        {
-            inFile.read(inStreamBuffer, 4096);
-            inFile.close();
-        }   
+        if (!inFile.is_open()) {
+            std::cerr << "Failed to open settings file: " << filePath << std::endl;
+            return 1;
+        }
+
+        //freopen("log.txt", "w", stdout);
+        //freopen("error_log.txt", "w", stderr);
+
+        inFile.read(inStreamBuffer, sizeof(inStreamBuffer));
+        inFile.close();
 
         readAppFileIn(inStreamBuffer);
 

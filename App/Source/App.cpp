@@ -43,8 +43,10 @@ int main(int argc, char** argv)
 #endif
 {
     glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit())
-        return 1;
+    if (!glfwInit()) {
+        fprintf(stderr, "Failed to initialize GLFW\n");
+        return -1;
+    }
 
     // Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -74,14 +76,14 @@ int main(int argc, char** argv)
     //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
     // Create window with graphics context using Dear ImGui GLFW+OpenGL3 
-    GLFWwindow* window = glfwCreateWindow(1280, 675, "BlockIT", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "BlockIT", nullptr, nullptr);
 
     if (window == nullptr)
         return 1;
 
     glfwMakeContextCurrent(window);
     // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
-    glfwHideWindow(window); 
+    //glfwHideWindow(window); 
 
     glfwSwapInterval(6); // Enable vsync
     // Monitor refresh rate/interval = application FPS.
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
     io.ConfigViewportsNoAutoMerge = true;
     io.IniFilename = nullptr;
@@ -187,7 +189,7 @@ int main(int argc, char** argv)
 
     const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
-    static int setState = 0; // Defaults to 0/first set
+    static int setState = 0; // Defaults to 0 / first set
     static int pastState = 0; // used to check if loading is needed
     const int TARGET_FPS = 30;
     const double FRAME_TIME = 1.0 / TARGET_FPS;
@@ -226,6 +228,8 @@ int main(int argc, char** argv)
             ImGui_ImplGlfw_Sleep(5);
             continue;
         }
+        
+        glClear(GL_COLOR_BUFFER_BIT);
         glfwPollEvents();
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -236,7 +240,6 @@ int main(int argc, char** argv)
         {
             startTime = std::chrono::high_resolution_clock::now();
         }
-        
 
         #pragma region UI Components
                 
@@ -383,7 +386,6 @@ int main(int argc, char** argv)
 
         #pragma endregion
 
-
         if (!show_window)
         {
             // Calculate frame duration
@@ -395,8 +397,6 @@ int main(int argc, char** argv)
                 std::this_thread::sleep_for(std::chrono::duration<double>(FRAME_TIME - elapsed.count()));
             }
         }
-
-        
 
         // Rendering
         ImGui::Render();

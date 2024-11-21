@@ -9,12 +9,17 @@
 #include <chrono>
 #include <cstdlib>
 #include <sstream>
+#include <cstring>
+#include <sys/stat.h> // For mkdir on Linux
+#include <sys/types.h>
 
 #ifdef _WIN32
 #include <direct.h>   // For _mkdir on Windows
+#define PATH_SEPARATOR "\\"
 #define MKDIR(path) _mkdir(path)
 #else
-#include <sys/stat.h> // For mkdir on Linux
+#include <unistd.h>
+#define PATH_SEPARATOR "/"
 #define MKDIR(path) mkdir(path, 0777)
 #endif
 
