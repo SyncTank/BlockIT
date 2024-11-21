@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 
     // # Idea Build a starting ImGUI window with flags.
     // Since I have window context call Iconify function in it.
-    ImGuiWindow start_window(0,"BlockIT");
+    //ImGuiWindow start_window(0,"BlockIT");
 
     // Clock for threads
     static float deltaClock = 0;
