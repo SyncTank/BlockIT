@@ -15,6 +15,7 @@
 
 #ifdef _WIN32
 #include <direct.h>   // For _mkdir on Windows
+#include <windows.h>
 #define PATH_SEPARATOR "\\"
 #define MKDIR(path) _mkdir(path)
 #else
@@ -213,6 +214,8 @@ namespace App
 	void init(ImGuiIO);
 
 	bool getIsRunning();
+
+	HICON LoadIconFromResource();
 
 	bool folderSetup();
 

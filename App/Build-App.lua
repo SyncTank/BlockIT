@@ -5,12 +5,15 @@ project "App"
    targetdir "Binaries/%{cfg.buildcfg}"
    staticruntime "on"
 
+	 targetname "BlockIT"
+
    files { "Source/*.h", "Source/*.cpp", "Source/*.c", 
    "include/imgui/**/*.h", "include/imgui/**/*.cpp", "include/imgui/**/*.hpp",
    "include/imgui/*.h", "include/imgui/*.cpp", 
 	"include/GLFW/*.h",
    "include/stb/*.h", 
-   "include/nfd/*.h", "include/nfd/*.hpp", "include/nfd/*.cpp"}
+   "include/nfd/*.h", "include/nfd/*.hpp", "include/nfd/*.cpp",
+   "../resources.rc"}
 
    includedirs{
 		"include/fmt",

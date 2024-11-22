@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 
     glfwMakeContextCurrent(window);
     // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
-    //glfwHideWindow(window); 
+    glfwHideWindow(window); 
 
     glfwSwapInterval(6); // Enable vsync
     // Monitor refresh rate/interval = application FPS.
@@ -134,10 +134,23 @@ int main(int argc, char** argv)
         style.SeparatorTextBorderSize = 1;
     }
 
+
+    // Taskbar Icon code - Not working still
+   
     //GLFWimage image_Icons[1];
-    //image_Icons[0].pixels = stbi_load("../temp_icon.png", &image_Icons[0].width, //&image_Icons[0].height,0, 4);
+    //image_Icons[0].pixels = stbi_load("../temp_icon.png", &image_Icons[0].width, &image_Icons[0].height,0, 4);
     //glfwSetWindowIcon(window, 1, image_Icons);
     //stbi_image_free(image_Icons->pixels);
+
+    //HICON hIcon = App::LoadIconFromResource();
+    //if (hIcon)
+    //{
+    //    GLFWimage image_Icons[1];
+    //    image_Icons[0].pixels = (unsigned char*)hIcon;
+    //    image_Icons[0].width = 48;
+    //    image_Icons[0].height = 48;
+    //    glfwSetWindowIcon(window, 1, image_Icons);
+    //}
 
     #pragma endregion
 
@@ -169,7 +182,7 @@ int main(int argc, char** argv)
 
     // Our flags for the Window Context
     bool show_demo_window = false;
-    bool show_window = true;
+    bool show_window = true; // Useless now, but kept var/functions in case for reference
     bool show_debug_frame = false;
     bool no_scroll = true;
     bool no_resize = true;
@@ -243,34 +256,33 @@ int main(int argc, char** argv)
 
         #pragma region UI Components
                 
-        if (show_window)
         {
             ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
-            
+
             // Main body
             ImGui::Begin("BlockIT", 0, window_flags);
-            
+
             auto wind_start = ImGui::GetWindowViewport();
-            
+
 
             ImGui::SetWindowSize(windowSize, windowCondor);
 
             if (ImGui::BeginMenuBar())
             {
-                
+
                 if (!App::getIsRunning())
                 {
                     if (ImGui::BeginMenu("Quit"))
                     {
-                        show_window = false;
                         ImGui::EndMenu();
+                        return 0;
                     }
                 }
 
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0)); // Remove background color
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.26f, .59f, .98f, .8f));   // Remove hover color
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.26f, .59f, .98f, 1.0f));   // Remove active color
-                
+
                 if (ImGui::Button("Minimize"))
                 {
                     glfwIconifyWindow(window);
@@ -308,7 +320,7 @@ int main(int argc, char** argv)
 
                 deltaClock += io.DeltaTime * 100;
                 std::string temp = "Delta Clock Cycle: " + std::to_string(deltaClock);
-                ImGui::Text(+ temp.c_str());
+                ImGui::Text(+temp.c_str());
             }
 
             // Settings for different Sets
@@ -375,15 +387,12 @@ int main(int argc, char** argv)
 
             // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
             if (show_demo_window)
+            {
                 ImGui::ShowDemoWindow(&show_demo_window);
+            }
+                
         }
-        else
-        {
-            return 0;
-        }
-
-        
-
+       
         #pragma endregion
 
         if (!show_window)

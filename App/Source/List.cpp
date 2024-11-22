@@ -1,4 +1,5 @@
 #include "List.h"
+#include "resource.h"
 
 namespace App 
 {
@@ -77,6 +78,12 @@ namespace App
     bool getIsRunning()
     {
         return isRunning;
+    }
+
+    // Function to load the icon from resources 
+    HICON LoadIconFromResource() 
+    { 
+        return LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)); 
     }
 
     // checks if directory exists if not make it, sets file path and inital data map
