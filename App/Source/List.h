@@ -157,6 +157,8 @@ namespace App
 			return false;
 		}
 
+		
+
 		bool isVaildTime(int hr, int min) const
 		{
 			// Convert to time_t to manipulate the time

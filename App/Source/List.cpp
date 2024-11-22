@@ -83,7 +83,10 @@ namespace App
     // Function to load the icon from resources 
     HICON LoadIconFromResource() 
     { 
-        return LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)); 
+        HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)); 
+        if (hIcon) {
+            return hIcon;
+        }
     }
 
     // checks if directory exists if not make it, sets file path and inital data map

@@ -9,9 +9,6 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_internal.h" // ??
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -33,6 +30,29 @@
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
+// Function to update GLFW window position based on ImGui drag
+void UpdateWindowPosition(GLFWwindow* window, ImGuiIO& io) {
+    static bool dragging = false;
+    static ImVec2 dragStartPos;
+    static ImVec2 windowStartPos;
+
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+        if (!dragging) {
+            dragging = true;
+            dragStartPos = io.MousePos;
+            int x, y;
+            glfwGetWindowPos(window, &x, &y);
+            windowStartPos = ImVec2((float)x, (float)y);
+        }
+
+        ImVec2 delta = ImVec2((io.MousePos.x - dragStartPos.x),(io.MousePos.y - dragStartPos.y));
+        glfwSetWindowPos(window, (int)(windowStartPos.x + delta.x), (int)(windowStartPos.y + delta.y));
+    }
+    else {
+        dragging = false;
+    }
 }
 
 // Main code
@@ -72,18 +92,19 @@ int main(int argc, char** argv)
 #endif
 
     // More options to hide window context
-    //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    // Create window with graphics context using Dear ImGui GLFW+OpenGL3 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "BlockIT", nullptr, nullptr);
+    // Create window with graphics context using Dear ImGui GLFW+OpenGL3 // ImVec2(500, 675); ImVec2(1280, 720);
+    GLFWwindow* window = glfwCreateWindow(500, 675, "BlockITMAIN", nullptr, nullptr);
 
     if (window == nullptr)
         return 1;
 
     glfwMakeContextCurrent(window);
+    glfwSetWindowPos(window, 200, 200);
     // Use this to hide the context window - note you must dock it outside or edit the .ini file of imgui for it to work
-    glfwHideWindow(window); 
+    //glfwHideWindow(window); 
 
     glfwSwapInterval(6); // Enable vsync
     // Monitor refresh rate/interval = application FPS.
@@ -104,11 +125,13 @@ int main(int argc, char** argv)
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    //io.ConfigFlags |= ImGuiViewportFlags_NoDecoration;
     io.ConfigViewportsNoAutoMerge = true;
+    io.ConfigViewportsNoTaskBarIcon = true;
+    //io.ConfigViewportsNoDecoration = true;
     io.IniFilename = nullptr;
-    //io.ConfigViewportsNoTaskBarIcon = true;
 
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | ImGuiTabBarFlags_TabListPopupButton;
 
@@ -136,11 +159,6 @@ int main(int argc, char** argv)
 
 
     // Taskbar Icon code - Not working still
-   
-    //GLFWimage image_Icons[1];
-    //image_Icons[0].pixels = stbi_load("../temp_icon.png", &image_Icons[0].width, &image_Icons[0].height,0, 4);
-    //glfwSetWindowIcon(window, 1, image_Icons);
-    //stbi_image_free(image_Icons->pixels);
 
     //HICON hIcon = App::LoadIconFromResource();
     //if (hIcon)
@@ -151,6 +169,41 @@ int main(int argc, char** argv)
     //    image_Icons[0].height = 48;
     //    glfwSetWindowIcon(window, 1, image_Icons);
     //}
+
+    // working?
+
+    HICON loaded_Image = App::LoadIconFromResource();
+    ICONINFO iconInfo;
+    GetIconInfo(loaded_Image, &iconInfo);
+
+    BITMAP bmp;
+    GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bmp);
+
+    int width = bmp.bmWidth;
+    int height = bmp.bmHeight;
+    int size = width * height * 4; // Assuming 32-bit color depth
+
+    unsigned char* pixels = new unsigned char[size];
+    BITMAPINFO bmi;
+    ZeroMemory(&bmi, sizeof(BITMAPINFO));
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -height; // Negative to indicate top-down bitmap
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    GetDIBits(GetDC(NULL), iconInfo.hbmColor, 0, height, pixels, &bmi, DIB_RGB_COLORS);
+
+    GLFWimage images[1];
+    images[0].width = width;
+    images[0].height = height;
+    images[0].pixels = pixels;
+
+    glfwSetWindowIcon(window, 1, images);
+
+    delete[] pixels;
+
 
     #pragma endregion
 
@@ -188,7 +241,7 @@ int main(int argc, char** argv)
     bool no_resize = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool no_menu = false;
-    bool no_move = false;
+    bool no_move = true;
     bool unsaved_document = false;
     static bool no_collapse = true;
 
@@ -200,7 +253,8 @@ int main(int argc, char** argv)
     if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
     if (no_move)            window_flags |= ImGuiWindowFlags_NoMove;
 
-    const ImVec2 windowSize = ImVec2(500, 675);
+
+    //const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
     static int setState = 0; // Defaults to 0 / first set
     static int pastState = 0; // used to check if loading is needed
@@ -210,10 +264,6 @@ int main(int argc, char** argv)
     std::chrono::steady_clock::time_point endTime;
 
     App::init(io); // setup function - preloads stuff
-
-    // # Idea Build a starting ImGUI window with flags.
-    // Since I have window context call Iconify function in it.
-    //ImGuiWindow start_window(0,"BlockIT");
 
     // Clock for threads
     static float deltaClock = 0;
@@ -230,12 +280,15 @@ int main(int argc, char** argv)
     while (!glfwWindowShouldClose(window))
 #endif
     {
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
         // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        
+        glfwPollEvents();
         if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0)
         {
             ImGui_ImplGlfw_Sleep(5);
@@ -243,7 +296,6 @@ int main(int argc, char** argv)
         }
         
         glClear(GL_COLOR_BUFFER_BIT);
-        glfwPollEvents();
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -254,18 +306,19 @@ int main(int argc, char** argv)
             startTime = std::chrono::high_resolution_clock::now();
         }
 
+        UpdateWindowPosition(window, io); // need to make better
+
         #pragma region UI Components
                 
         {
-            ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
+            //ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
 
             // Main body
             ImGui::Begin("BlockIT", 0, window_flags);
 
-            auto wind_start = ImGui::GetWindowViewport();
-
-
-            ImGui::SetWindowSize(windowSize, windowCondor);
+            //ImGui::SetWindowSize(windowSize, windowCondor);
 
             if (ImGui::BeginMenuBar())
             {
@@ -285,6 +338,12 @@ int main(int argc, char** argv)
 
                 if (ImGui::Button("Minimize"))
                 {
+                    auto Viewport = ImGui::GetWindowViewport();
+                    auto get_viewport = ImGui::GetCurrentContext();
+                    auto guiwindow = ImGui::GetCurrentWindow();
+
+                    //glfwGetWindowTitle();
+                    ImGui::SetCurrentViewport(guiwindow, get_viewport->CurrentViewport);
                     glfwIconifyWindow(window);
                 }
 
@@ -409,8 +468,6 @@ int main(int argc, char** argv)
 
         // Rendering
         ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
