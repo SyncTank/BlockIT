@@ -32,29 +32,6 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-// Function to update GLFW window position based on ImGui drag
-void UpdateWindowPosition(GLFWwindow* window, ImGuiIO& io) {
-    static bool dragging = false;
-    static ImVec2 dragStartPos;
-    static ImVec2 windowStartPos;
-
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-        if (!dragging) {
-            dragging = true;
-            dragStartPos = io.MousePos;
-            int x, y;
-            glfwGetWindowPos(window, &x, &y);
-            windowStartPos = ImVec2((float)x, (float)y);
-        }
-
-        ImVec2 delta = ImVec2((io.MousePos.x - dragStartPos.x),(io.MousePos.y - dragStartPos.y));
-        glfwSetWindowPos(window, (int)(windowStartPos.x + delta.x), (int)(windowStartPos.y + delta.y));
-    }
-    else {
-        dragging = false;
-    }
-}
-
 // Main code
 #ifdef _WIN32
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -92,11 +69,11 @@ int main(int argc, char** argv)
 #endif
 
     // More options to hide window context
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
     // Create window with graphics context using Dear ImGui GLFW+OpenGL3 // ImVec2(500, 675); ImVec2(1280, 720);
-    GLFWwindow* window = glfwCreateWindow(500, 675, "BlockITMAIN", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(500, 675, "BlockIT", nullptr, nullptr);
 
     if (window == nullptr)
         return 1;
@@ -243,6 +220,7 @@ int main(int argc, char** argv)
     bool no_menu = false;
     bool no_move = true;
     bool unsaved_document = false;
+    bool no_title = true;
     static bool no_collapse = true;
 
     ImGuiWindowFlags window_flags = 0;
@@ -252,7 +230,7 @@ int main(int argc, char** argv)
     if (no_scroll)          window_flags |= ImGuiWindowFlags_NoScrollbar;
     if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
     if (no_move)            window_flags |= ImGuiWindowFlags_NoMove;
-
+    if (no_title)           window_flags |= ImGuiWindowFlags_NoTitleBar;
 
     //const ImVec2 windowSize = ImVec2(500, 675);
     const ImGuiCond windowCondor = 0;
@@ -280,22 +258,22 @@ int main(int argc, char** argv)
     while (!glfwWindowShouldClose(window))
 #endif
     {
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
         // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
+        
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+
         if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0)
         {
             ImGui_ImplGlfw_Sleep(5);
             continue;
         }
         
-        glClear(GL_COLOR_BUFFER_BIT);
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -306,46 +284,38 @@ int main(int argc, char** argv)
             startTime = std::chrono::high_resolution_clock::now();
         }
 
-        UpdateWindowPosition(window, io); // need to make better
+        //UpdateWindowPosition(window, io); // need to make better
 
         #pragma region UI Components
                 
         {
             //ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
             ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 
             // Main body
             ImGui::Begin("BlockIT", 0, window_flags);
 
-            //ImGui::SetWindowSize(windowSize, windowCondor);
-
             if (ImGui::BeginMenuBar())
             {
 
-                if (!App::getIsRunning())
-                {
-                    if (ImGui::BeginMenu("Quit"))
-                    {
-                        ImGui::EndMenu();
-                        return 0;
-                    }
-                }
+                //if (!App::getIsRunning())
+                //{
+                //    if (ImGui::BeginMenu("Quit"))
+                //    {
+                //        return 0;
+                //        ImGui::EndMenu();
+                //    }
+                //}
 
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0)); // Remove background color
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.26f, .59f, .98f, .8f));   // Remove hover color
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.26f, .59f, .98f, 1.0f));   // Remove active color
 
-                if (ImGui::Button("Minimize"))
-                {
-                    auto Viewport = ImGui::GetWindowViewport();
-                    auto get_viewport = ImGui::GetCurrentContext();
-                    auto guiwindow = ImGui::GetCurrentWindow();
-
-                    //glfwGetWindowTitle();
-                    ImGui::SetCurrentViewport(guiwindow, get_viewport->CurrentViewport);
-                    glfwIconifyWindow(window);
-                }
+                //if (ImGui::Button("Minimize"))
+                //{
+                //    glfwIconifyWindow(window);
+                //}
 
                 if (ImGui::Button("Save"))
                 {
